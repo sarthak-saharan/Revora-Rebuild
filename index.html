@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Revora Health | Care Continuity for Physical Therapy (feature concept)</title>
+<meta name="description" content="Feature concept for Revora Health: a caseload triage simulator and a drop-off and RTM revenue calculator, built on Revora's design system." />
+<link rel="icon" href="assets/favicon.ico" />
+<link rel="preload" href="assets/fonts/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="assets/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="assets/fonts/revora-f.css" />
+<style>
+/* ---------- Fonts (exact files served by revora.health) ---------- */
+@font-face{font-family:Fraunces;font-style:normal;font-weight:100 900;font-display:swap;src:url(assets/fonts/fraunces-latin.woff2) format("woff2")}
+@font-face{font-family:Fraunces;font-style:italic;font-weight:100 900;font-display:swap;src:url(assets/fonts/fraunces-italic-latin.woff2) format("woff2")}
+@font-face{font-family:"Public Sans";font-style:normal;font-weight:100 900;font-display:swap;src:url(assets/fonts/public-sans-latin.woff2) format("woff2")}
+@font-face{font-family:"Fraunces Fallback";src:local("Times New Roman");ascent-override:84.71%;descent-override:22.09%;line-gap-override:0%;size-adjust:115.45%}
+
+/* ---------- Tokens (from revora.health @theme) ---------- */
+:root{
+  --cream:#faf7f2; --linen:#f6f1e8; --mist:#e9efeb; --parchment:#f2ecdf;
+  --pine-deep:#0b1f1c; --pine:#14332f; --sage-ink:#4e675f; --sage:#6e8f87;
+  --sand:#e7dfd2; --teal:#0e4b44; --terracotta-ink:#9e5232; --terracotta:#c96f4a;
+  --teal-80:rgba(14,75,68,.8); --teal-70:rgba(14,75,68,.7); --teal-60:rgba(14,75,68,.6);
+  --teal-35:rgba(14,75,68,.35); --teal-30:rgba(14,75,68,.3);
+  --sand-50:rgba(231,223,210,.5); --sand-60:rgba(231,223,210,.6); --sand-70:rgba(231,223,210,.7); --sand-80:rgba(231,223,210,.8);
+  --font-display:"Revora f","Fraunces","Fraunces Fallback",Georgia,"Times New Roman",serif;
+  --font-sans:"Public Sans",system-ui,-apple-system,sans-serif;
+  --text-small:.9375rem; --text-body:1.0625rem; --text-lead:1.25rem; --text-h3:1.375rem; --text-label:.8125rem;
+  --text-display-xl:clamp(2.5rem,7vw,6.5rem);
+  --ease-arrive:cubic-bezier(.22,1,.36,1); --ease-entrance:cubic-bezier(.16,1,.3,1); --ease-travel:cubic-bezier(.65,0,.35,1);
+  --dur-base:.32s; --dur-rise:1.2s;
+  --shadow-card:0 1px 2px rgba(11,31,28,.08),0 12px 28px -8px rgba(11,31,28,.28),0 40px 80px -24px rgba(11,31,28,.32);
+  --shadow-soft:0 1px 2px rgba(11,31,28,.05),0 12px 28px -14px rgba(11,31,28,.25);
+  --shadow-nav:0 2px 24px rgba(20,51,47,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;border:0 solid}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{font-family:var(--font-sans);background:var(--cream);color:var(--teal);font-size:var(--text-body);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,svg{display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;cursor:pointer}
+input{font:inherit;color:inherit}
+em{font-style:italic}
+.display{font-family:var(--font-display);font-weight:500}
+.eyebrow{font-size:var(--text-label);line-height:1.2;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.wrap{max-width:72rem;margin:0 auto;padding:6rem 1.5rem}
+@media (min-width:640px){.wrap{padding:8rem 2.5rem}}
+.small{font-size:var(--text-small);line-height:1.5}
+.lead{font-size:var(--text-lead);line-height:1.55}
+.muted{color:var(--teal-80)}
+.sage-ink{color:var(--sage-ink)}
+
+/* Buttons */
+.btn{display:inline-block;border-radius:9999px;padding:.625rem 1.25rem;font-size:var(--text-small);line-height:1.5;font-weight:500;transition:background-color .15s,color .15s;white-space:nowrap}
+.btn-teal{background:var(--teal);color:var(--cream)} .btn-teal:hover{background:var(--pine)}
+.btn-white{background:#fff;color:var(--pine)} .btn-white:hover{background:var(--cream)}
+.btn-cream{background:var(--cream);color:var(--pine)} .btn-cream:hover{background:var(--sand)}
+.btn-ghost{background:var(--sand-60);color:var(--teal)} .btn-ghost:hover{background:var(--sand-80)}
+
+/* Motion */
+@keyframes rise-in{0%{opacity:0;filter:blur(4px);transform:translateY(22px)}}
+@keyframes rise-in-plain{0%{opacity:0;transform:translateY(22px)}}
+@keyframes accent-settle{0%{filter:blur(6px)}}
+@keyframes marquee{to{transform:translate(-50%)}}
+.load-rise{animation:rise-in var(--dur-rise) var(--ease-arrive) var(--beat,0s) backwards}
+.load-rise-plain{animation:rise-in-plain var(--dur-rise) var(--ease-arrive) var(--beat,0s) backwards}
+.load-accent{display:inline-block;animation:accent-settle 1.35s var(--ease-arrive) calc(var(--beat,0s) + 80ms) backwards}
+.beat-1{--beat:.1s} .beat-2{--beat:.26s} .beat-3{--beat:.38s}
+.reveal{opacity:0;filter:blur(4px);transform:translateY(22px);transition:opacity var(--dur-rise) var(--ease-arrive) var(--beat,0s),transform var(--dur-rise) var(--ease-arrive) var(--beat,0s),filter var(--dur-rise) var(--ease-arrive) var(--beat,0s)}
+.reveal.in{opacity:1;filter:none;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;filter:none;transform:none;transition:none}.load-rise,.load-rise-plain,.load-accent{animation:none}.marquee-track{animation:none!important}}
+
+/* ---------- Disclaimer banner ---------- */
+#disclaimer-banner a:hover{color:var(--terracotta-ink)!important}
+
+/* ---------- Header ---------- */
+#main-header{position:fixed;left:0;right:0;z-index:50;display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:0 1rem;pointer-events:none;transition:transform var(--dur-base) var(--ease-entrance)}
+#main-header.hide{transform:translateY(-160%)}
+.nav-pill{pointer-events:auto;display:flex;align-items:center;gap:1rem;border-radius:9999px;background:#fff;padding:.5rem .5rem .5rem 1.25rem;box-shadow:var(--shadow-nav)}
+.burger{position:relative;display:flex;width:2.5rem;height:2.5rem;align-items:center;justify-content:center;border-radius:9999px;transition:background-color .15s}
+.burger:hover{background:var(--cream)}
+.burger span{position:absolute;height:2px;width:18px;border-radius:9999px;background:var(--teal);transition:transform .3s}
+.burger span:nth-child(1){transform:translateY(-3.5px)} .burger span:nth-child(2){transform:translateY(3.5px)}
+.burger[aria-expanded=true] span:nth-child(1){transform:rotate(45deg)} .burger[aria-expanded=true] span:nth-child(2){transform:rotate(-45deg)}
+#site-menu{pointer-events:none;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.25rem;border-radius:1.75rem;background:#fff;padding:.5rem .625rem;box-shadow:var(--shadow-nav);transform-origin:top;transform:translateY(-.75rem) scale(.75);opacity:0;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s cubic-bezier(.34,1.56,.64,1)}
+#site-menu.open{pointer-events:auto;transform:none;opacity:1}
+#site-menu a.link{border-radius:9999px;padding:.5rem 1rem;font-size:var(--text-small);font-weight:500;transition:background-color .15s}
+#site-menu a.link:hover{background:var(--cream)}
+#site-menu a.link.new{position:relative}
+#site-menu a.link.new::after{content:"";position:absolute;top:.45rem;right:.45rem;width:6px;height:6px;border-radius:50%;background:var(--terracotta)}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;display:flex;flex-direction:column;height:100svh;min-height:600px;overflow:hidden}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-shade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(20,51,47,.5),rgba(20,51,47,.2),rgba(20,51,47,.6))}
+.hero-body{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7rem 1.25rem 2.5rem;text-align:center}
+.hero h1{max-width:64rem;text-wrap:balance;font-size:var(--text-display-xl);line-height:1.02;color:#fff}
+.hero-sub{margin-top:1.5rem;max-width:36rem;color:rgba(255,255,255,.9)}
+.hero-cta{position:relative;margin-bottom:4rem;display:flex;justify-content:center;padding:0 1.25rem}
+.hero-cta-pill{display:flex;align-items:center;gap:1.5rem;border-radius:9999px;background:rgba(20,51,47,.45);padding:.5rem .5rem .5rem 1.5rem;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.hero-cta-pill p{color:var(--cream)}
+.hero-cta-pill .numbers-link{color:var(--cream);text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(250,247,242,.5);white-space:nowrap}
+.hero-cta-pill .show-sm{display:none}
+.hero-cta-pill .numbers-link:hover{text-decoration-color:var(--cream)}
+
+/* ---------- Intro ---------- */
+.intro{position:relative;margin-top:-2.5rem;border-radius:2.5rem 2.5rem 0 0;background:linear-gradient(to bottom,var(--cream),var(--linen))}
+.intro-stat{max-width:56rem;font-size:clamp(2.3rem,4.6vw,3.8rem);line-height:1.08}
+.intro-stat .acc{font-style:italic;color:var(--teal-80)}
+.intro .rule{margin-top:3.5rem;height:1px;background:var(--sand)}
+.intro h2{margin-top:3.5rem;max-width:48rem;font-size:clamp(1.9rem,3.4vw,2.9rem);line-height:1.15}
+.intro .src a{text-decoration:underline;text-underline-offset:4px}
+.intro .src a:hover{color:var(--terracotta-ink)}
+
+/* Backers */
+.backers{background:linear-gradient(to bottom,var(--linen),var(--parchment));padding:2.5rem 0 6rem}
+.marquee{margin-top:2.25rem;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent)}
+.marquee-track{display:flex;width:max-content;animation:marquee 35s linear infinite}
+.marquee-set{display:flex;flex-shrink:0;align-items:center;gap:4rem;padding-right:4rem}
+.logo{display:block;flex-shrink:0;background:rgba(14,75,68,.75);-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+.logo.jsv{height:2.5rem;aspect-ratio:822/160;-webkit-mask-image:url(assets/backers/jsv.webp);mask-image:url(assets/backers/jsv.webp)}
+.logo.ms{height:2.0625rem;aspect-ratio:750/160;-webkit-mask-image:url(assets/backers/microsoft.webp);mask-image:url(assets/backers/microsoft.webp)}
+.logo.cmu{height:1.6875rem;aspect-ratio:1560/160;-webkit-mask-image:url(assets/backers/cmu.webp);mask-image:url(assets/backers/cmu.webp)}
+.logo.sw{height:2.625rem;aspect-ratio:993/160;-webkit-mask-image:url(assets/backers/swartz.webp);mask-image:url(assets/backers/swartz.webp)}
+
+/* ---------- Pillars ---------- */
+.pillars{background:linear-gradient(to bottom,var(--parchment),#eeede4)}
+.pillars h2{margin-top:1rem;max-width:56rem;font-size:clamp(2.6rem,5.5vw,4.5rem);line-height:1.05}
+.card-float{border-radius:20px;border:1px solid rgba(255,255,255,.6);background:rgba(250,247,242,.95);padding:.875rem;box-shadow:var(--shadow-card)}
+.plan-row{display:flex;width:100%;align-items:center;gap:.875rem;border-radius:1rem;background:var(--sand-50);padding:.75rem 1rem;text-align:left;transition:background-color var(--dur-base) var(--ease-entrance)}
+.plan-row:hover{background:var(--sand-80)}
+.tick{display:flex;width:1.5rem;height:1.5rem;flex-shrink:0;align-items:center;justify-content:center;border-radius:9999px;border:1px solid var(--sage);background:var(--cream);transition:all var(--dur-base) var(--ease-entrance)}
+.plan-row[aria-checked=true] .tick{background:var(--terracotta);border-color:var(--terracotta)}
+.row-title{display:block;font-size:var(--text-small);line-height:1.25}
+.row-sub{display:block;font-size:.8rem;line-height:1.375;color:var(--sage-ink)}
+.av{display:flex;flex-shrink:0;align-items:center;justify-content:center;border-radius:9999px;background:var(--pine);font-weight:600;color:var(--cream)}
+.clara-dot{display:flex;width:1.5rem;height:1.5rem;flex-shrink:0;align-items:center;justify-content:center;border-radius:9999px;background:var(--teal);font-family:var(--font-display);font-size:.8rem;font-weight:500;color:var(--cream)}
+.bubble{display:block;margin-top:.5rem;border-radius:1rem 1rem 1rem 1rem;border-top-left-radius:.375rem;background:var(--sand-70);padding:.5rem .75rem;font-size:.82rem;line-height:1.375}
+.rtm-badge{position:absolute;right:-.75rem;top:-.75rem;display:flex;align-items:center;gap:.375rem;border-radius:9999px;border:1px solid rgba(255,255,255,.6);background:#fff;padding:.25rem .625rem;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--terracotta-ink);box-shadow:var(--shadow-card)}
+.timeline{position:relative;height:400px;margin-top:5rem}
+.tl-visit{position:absolute;top:50%;width:.75rem;height:.75rem;border-radius:50%;background:var(--terracotta);transform:translateY(-50%)}
+.tl-label{position:absolute;top:calc(50% + .9rem);font-size:.75rem;color:var(--sage-ink)}
+.tl-line{position:absolute;left:.75rem;right:.75rem;top:50%;height:1px;background:var(--teal-35)}
+.tl-ticks{position:absolute;left:4%;right:4%;top:50%;display:flex;justify-content:space-between;transform:translateY(-50%)}
+.tl-ticks span{height:.625rem;width:1px;background:var(--teal-30)}
+.tl-node{position:absolute;display:flex;align-items:center;transform:translateX(-50%)}
+.tl-node.up{bottom:50%;flex-direction:column} .tl-node.down{top:50%;flex-direction:column-reverse}
+.tl-stem{height:1.75rem;width:1px;background:var(--teal-30)}
+.tl-knob{display:block;width:.625rem;height:.625rem;border-radius:50%;border:1px solid rgba(14,75,68,.6);background:var(--parchment)}
+.tl-node.up .tl-knob{margin-bottom:-5px} .tl-node.down .tl-knob{margin-top:-5px}
+.pillar-grid{display:grid;gap:.75rem;margin-top:6rem}
+@media (min-width:768px){.pillar-grid{grid-template-columns:repeat(3,1fr)}}
+.pillar{display:flex;min-height:300px;flex-direction:column;border-radius:1.5rem;background:var(--sand-60);padding:1.75rem}
+.pillar h3{margin-top:auto;padding-top:4rem;font-size:var(--text-h3);line-height:1.3}
+.pillar p{margin-top:.75rem;color:var(--teal-80)}
+.tl-mobile{display:none}
+
+/* ---------- Features ---------- */
+.features{background:linear-gradient(to bottom,#eeede4,var(--mist));overflow-x:clip}
+.features .wrap{display:grid;gap:3.5rem}
+@media (min-width:1024px){.features .wrap{grid-template-columns:1fr 1.1fr;gap:4rem}.feat-left{position:sticky;top:6rem;align-self:start;display:flex;flex-direction:column;min-height:calc(100svh - 12rem)}}
+.features h2{max-width:28rem;font-size:clamp(2rem,3.6vw,3rem);line-height:1.1}
+.feat-tabs{margin-top:2.25rem;display:none;flex-direction:column;align-items:flex-start;gap:.375rem}
+@media (min-width:1024px){.feat-tabs{display:flex}.feat-foot{margin-top:auto!important;padding-top:3rem}}
+.feat-tabs button{border-radius:.75rem;padding:.625rem 1rem;text-align:left;color:var(--teal-60);transition:all .15s}
+.feat-tabs button:hover{color:var(--teal)}
+.feat-tabs button.on{background:rgba(255,255,255,.7);color:var(--teal)}
+.feat-foot{margin-top:3rem;max-width:24rem}
+.feat-cards{display:flex;flex-direction:column;gap:1.5rem}
+.feat-card{display:flex;flex-direction:column;border-radius:1.5rem;background:rgba(255,255,255,.6);padding:1.5rem}
+@media (min-width:640px){.feat-card{padding:2rem}}
+@media (min-width:1024px){.feat-card{min-height:74vh}}
+.feat-card h3{margin-top:1rem;font-size:var(--text-h3);line-height:1.3}
+.feat-stage{position:relative;isolation:isolate;margin:auto 0;display:flex;justify-content:center;padding:2rem 0}
+.glow{pointer-events:none;position:absolute;inset:-3rem -4rem;z-index:-1;filter:blur(40px);background:radial-gradient(62% 52% at 50% 45%,rgba(110,143,135,.42),transparent 72%)}
+.feat-card > p{color:var(--teal-70);font-size:var(--text-small)}
+.phone{width:100%;max-width:380px;border-radius:26px;border:1px solid rgba(255,255,255,.5);background:rgba(250,247,242,.95);padding:1.5rem 1.5rem 2rem;box-shadow:var(--shadow-card)}
+.ring{position:relative;width:6rem;height:6rem;flex-shrink:0}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle.prog{transition:stroke-dasharray .8s var(--ease-arrive)}
+.ring span{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-size:1.35rem;font-weight:500}
+.pill-row{display:flex;align-items:center;gap:.75rem;border-radius:9999px;background:var(--sand-60);padding:.625rem 1rem}
+.pill-row .tick{width:1.25rem;height:1.25rem}
+.pill-row.done .tick{background:var(--terracotta);border-color:var(--terracotta)}
+.stack{position:relative;height:calc(4.75rem + 78px);margin-top:.75rem}
+.stack-card{position:absolute;left:0;right:0;bottom:0;display:flex;height:4.75rem;align-items:center;gap:.875rem;border-radius:1rem;border:1px solid rgba(255,255,255,.6);background:var(--cream);padding:0 1rem;box-shadow:var(--shadow-card);transform-origin:50% 100%}
+.dot{width:.625rem;height:.625rem;flex-shrink:0;border-radius:50%;margin-left:auto}
+.dot.sage{background:var(--sage)} .dot.hollow{border:1px solid var(--terracotta);background:var(--cream)} .dot.terra{background:var(--terracotta)}
+.today-tag{margin-left:auto;border-radius:9999px;background:rgba(201,111,74,.12);padding:.25rem .625rem;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--terracotta-ink)}
+
+/* ---------- NEW FEATURE: Your clinic, in numbers ---------- */
+.numbers{background:linear-gradient(to bottom,var(--mist),#edf1ec 55%,var(--mist));position:relative}
+.concept-tag{display:inline-flex;align-items:center;gap:.5rem;border-radius:9999px;background:#fff;padding:.35rem .8rem .35rem .45rem;font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--terracotta-ink);box-shadow:var(--shadow-soft)}
+.concept-tag i{display:block;width:.5rem;height:.5rem;border-radius:50%;background:var(--terracotta);box-shadow:0 0 0 4px rgba(201,111,74,.18)}
+.numbers h2{margin-top:1.25rem;max-width:52rem;font-size:clamp(2.4rem,5vw,4.25rem);line-height:1.05}
+.numbers h2 em{color:var(--teal-80)}
+.numbers .intro-lead{margin-top:1.25rem;max-width:38rem;color:var(--teal-80)}
+.step-label{display:flex;align-items:center;gap:.75rem;margin-top:4.5rem;color:var(--sage-ink)}
+.step-label b{display:flex;width:1.75rem;height:1.75rem;align-items:center;justify-content:center;border-radius:50%;background:var(--teal);color:var(--cream);font-family:var(--font-display);font-weight:500;font-size:.85rem}
+.step-title{margin-top:.75rem;font-size:clamp(1.75rem,3vw,2.375rem);line-height:1.15;max-width:40rem}
+.step-copy{margin-top:.75rem;max-width:38rem;color:var(--teal-80)}
+
+/* triage */
+.sim{margin-top:2.5rem;display:grid;gap:1.25rem;align-items:start}
+@media (min-width:1024px){.sim{grid-template-columns:1.25fr 1fr;gap:1.5rem}}
+.panel{border-radius:1.5rem;background:rgba(255,255,255,.6);padding:1.25rem}
+@media (min-width:640px){.panel{padding:1.75rem}}
+.seg{display:inline-flex;border-radius:9999px;background:var(--sand-60);padding:.25rem}
+.seg button{border-radius:9999px;padding:.5rem 1rem;font-size:var(--text-small);font-weight:500;color:var(--teal-70);transition:all var(--dur-base) var(--ease-entrance);min-height:2.5rem}
+.seg button.on{background:#fff;color:var(--teal);box-shadow:0 1px 2px rgba(11,31,28,.08)}
+.sim-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem}
+.caseload{margin-top:1.25rem;border-radius:20px;border:1px solid rgba(255,255,255,.6);background:rgba(250,247,242,.95);padding:1rem;box-shadow:var(--shadow-card)}
+.caseload-top{display:flex;align-items:baseline;justify-content:space-between;gap:.75rem;padding:0 .25rem}
+.caseload-top .display{font-size:1.15rem}
+.rows{position:relative;margin-top:.75rem;transition:height .5s var(--ease-arrive)}
+.prow{position:absolute;left:0;right:0;display:flex;align-items:center;gap:.75rem;height:4rem;border-radius:1rem;background:var(--sand-50);padding:0 .75rem;transition:transform .7s var(--ease-travel),background-color .4s,box-shadow .4s,opacity .4s}
+.prow .av{width:2.25rem;height:2.25rem;font-size:.7rem;transition:background-color .4s}
+.prow.flag{background:#fff;box-shadow:var(--shadow-soft)}
+.prow.flag .av{background:var(--terracotta)}
+.prow.cancel{opacity:.55}
+.prow.cancel .row-title{text-decoration:line-through;text-decoration-color:var(--teal-35)}
+.prow .meta{min-width:0;flex:1}
+.prow .row-title{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .row-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .right{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.reach{border-radius:9999px;background:var(--teal);color:var(--cream);font-size:.78rem;font-weight:500;padding:.4rem .8rem;transition:background-color .15s;min-height:2rem}
+.reach:hover{background:var(--pine)}
+.chip{border-radius:9999px;padding:.2rem .55rem;font-size:.68rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.chip.terra{background:rgba(201,111,74,.12);color:var(--terracotta-ink)}
+.chip.sage{background:rgba(110,143,135,.16);color:var(--sage-ink)}
+.chip.grey{background:var(--sand-60);color:var(--sage-ink)}
+
+/* week scrubber (echoes the brand's visit-to-visit timeline) */
+.week{margin-top:1.5rem;padding:0 .25rem}
+.week-track{position:relative;height:2.75rem}
+.week-line{position:absolute;left:0;right:0;top:50%;height:1px;background:var(--teal-35)}
+.week-fill{position:absolute;left:0;top:50%;height:2px;margin-top:-.5px;background:var(--terracotta);transition:width .5s var(--ease-arrive)}
+.week-visit{position:absolute;top:50%;width:.75rem;height:.75rem;border-radius:50%;background:var(--terracotta);transform:translate(-50%,-50%)}
+.week-day{position:absolute;top:50%;width:.625rem;height:.625rem;border-radius:50%;border:1px solid rgba(14,75,68,.6);background:var(--parchment);transform:translate(-50%,-50%);transition:all .3s}
+.week-day.past{background:var(--teal);border-color:var(--teal)}
+.week-cursor{position:absolute;top:50%;width:1rem;height:1rem;border-radius:50%;background:var(--terracotta);box-shadow:0 0 0 5px rgba(201,111,74,.18);transform:translate(-50%,-50%);transition:left .5s var(--ease-arrive);pointer-events:none}
+.week input[type=range]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0}
+.week-labels{position:relative;height:1.25rem;font-size:.75rem;color:var(--sage-ink)}
+.week-labels span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.week-labels span.on{color:var(--teal);font-weight:600}
+.week-ctrl{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-top:1rem}
+.play{display:inline-flex;align-items:center;gap:.5rem}
+.play svg{width:12px;height:12px}
+
+/* side story */
+.story{display:flex;flex-direction:column;gap:1rem}
+.story-card{border-radius:1.5rem;background:var(--sand-60);padding:1.5rem}
+.story-card .display{font-size:var(--text-h3);line-height:1.3}
+.bignum{font-family:var(--font-display);font-weight:500;font-size:clamp(2.75rem,5vw,3.75rem);line-height:1;letter-spacing:-.01em}
+.stat-pair{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.stat{border-radius:1.25rem;background:#fff;padding:1.1rem 1.25rem;box-shadow:var(--shadow-soft)}
+.stat .bignum{font-size:2.25rem}
+.stat .lbl{margin-top:.4rem;font-size:.82rem;line-height:1.4;color:var(--sage-ink)}
+.stat.alert .bignum{color:var(--terracotta-ink)}
+.log{display:flex;flex-direction:column;gap:.5rem;max-height:13.5rem;overflow:auto;padding-right:.25rem}
+.log li{list-style:none;display:flex;gap:.6rem;align-items:flex-start;font-size:.85rem;line-height:1.45}
+.log li i{flex-shrink:0;margin-top:.45rem;width:.4rem;height:.4rem;border-radius:50%;background:var(--sage)}
+.log li.t i{background:var(--terracotta)}
+.log li b{font-weight:600}
+.log .empty{color:var(--sage-ink)}
+
+/* calculator */
+.calc{margin-top:2.5rem;display:grid;gap:1.5rem;align-items:start}
+@media (min-width:1024px){.calc{grid-template-columns:1fr 1.05fr}}
+.field{padding:1.1rem 0;border-bottom:1px solid var(--sand)}
+.field:first-child{padding-top:0}
+.field:last-child{border-bottom:0;padding-bottom:0}
+.field-top{display:flex;align-items:baseline;justify-content:space-between;gap:1rem}
+.field-top label{font-size:var(--text-small);font-weight:500}
+.field-top output{font-family:var(--font-display);font-weight:500;font-size:1.35rem;white-space:nowrap}
+.field .hint{margin-top:.15rem;font-size:.8rem;color:var(--sage-ink)}
+.range{-webkit-appearance:none;appearance:none;width:100%;height:2.75rem;background:transparent;margin-top:.1rem;cursor:pointer;--p:50%}
+.range::-webkit-slider-runnable-track{height:4px;border-radius:9999px;background:linear-gradient(to right,var(--teal) var(--p),var(--sand) var(--p))}
+.range::-moz-range-track{height:4px;border-radius:9999px;background:var(--sand)}
+.range::-moz-range-progress{height:4px;border-radius:9999px;background:var(--teal)}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;background:#fff;border:1.5px solid var(--teal);box-shadow:0 2px 8px rgba(11,31,28,.18);transition:transform .15s}
+.range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:1.5px solid var(--teal);box-shadow:0 2px 8px rgba(11,31,28,.18)}
+.range:active::-webkit-slider-thumb{transform:scale(1.12)}
+.range:focus-visible{outline:2px solid var(--terracotta);outline-offset:4px;border-radius:4px}
+
+.result{border-radius:1.75rem;background:var(--pine);color:var(--cream);padding:1.75rem;position:relative;overflow:hidden}
+@media (min-width:640px){.result{padding:2.25rem}}
+@media (min-width:1024px){.result{position:sticky;top:6.5rem}}
+.result::before{content:"";position:absolute;inset:auto -20% -40% -20%;height:70%;background:radial-gradient(50% 50% at 50% 50%,rgba(110,143,135,.35),transparent 70%);pointer-events:none}
+.result > *{position:relative}
+.result .eyebrow{color:var(--sand)}
+.result .lost{margin-top:.75rem;font-size:clamp(3rem,6vw,4.5rem);color:#fff}
+.result .lost-sub{margin-top:.5rem;color:rgba(250,247,242,.75);font-size:var(--text-small);max-width:26rem}
+.bar{margin-top:1.75rem;height:.75rem;border-radius:9999px;background:rgba(250,247,242,.12);overflow:hidden;display:flex}
+.bar span{display:block;height:100%;transition:width .6s var(--ease-arrive)}
+.bar .b-kept{background:var(--sand)} .bar .b-rtm{background:var(--terracotta)}
+.legend{margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.4rem 1.25rem;font-size:.8rem;color:rgba(250,247,242,.75)}
+.legend i{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:.4rem;vertical-align:middle}
+.lines{margin-top:1.5rem;border-top:1px solid rgba(250,247,242,.15)}
+.line{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:1rem 0;border-bottom:1px solid rgba(250,247,242,.15)}
+.line .k{font-size:var(--text-small);color:rgba(250,247,242,.9)}
+.line .k small{display:block;font-size:.78rem;color:rgba(250,247,242,.6);margin-top:.15rem}
+.line .v{font-family:var(--font-display);font-weight:500;font-size:1.6rem;white-space:nowrap}
+.line.total .k{color:#fff;font-weight:500}
+.line.total .v{font-size:2.2rem;color:#fff}
+.line.total{border-bottom:0}
+.result-cta{margin-top:1.25rem;display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1rem}
+.result-cta .note{font-size:.78rem;color:rgba(250,247,242,.6)}
+details.assume{margin-top:1.25rem;font-size:.82rem;color:rgba(250,247,242,.7)}
+details.assume summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:.4rem;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(250,247,242,.35)}
+details.assume summary::-webkit-details-marker{display:none}
+details.assume ul{margin-top:.75rem;padding-left:1rem;display:flex;flex-direction:column;gap:.35rem}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:1rem;background:rgba(11,31,28,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.modal.open{display:flex}
+.modal-card{width:100%;max-width:30rem;max-height:calc(100svh - 2rem);overflow:auto;border-radius:1.75rem;background:var(--cream);padding:1.75rem;box-shadow:var(--shadow-card);animation:rise-in .7s var(--ease-arrive)}
+.modal-card h3{font-size:1.75rem;line-height:1.15}
+.sum{margin-top:1.25rem;border-radius:1.25rem;background:var(--sand-60);padding:1rem 1.1rem;display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.sum div{font-size:.78rem;color:var(--sage-ink)}
+.sum b{display:block;font-family:var(--font-display);font-weight:500;font-size:1.3rem;color:var(--teal)}
+.form{margin-top:1.25rem;display:flex;flex-direction:column;gap:.75rem}
+.form label{font-size:.82rem;font-weight:500}
+.form input{margin-top:.3rem;width:100%;border-radius:.9rem;background:#fff;border:1px solid var(--sand);padding:.8rem 1rem;font-size:1rem;outline:none;transition:border-color .15s}
+.form input:focus{border-color:var(--teal)}
+.modal-x{float:right;display:flex;width:2.5rem;height:2.5rem;align-items:center;justify-content:center;border-radius:50%;background:var(--sand-60);margin:-.25rem -.25rem 0 .5rem}
+.sent{display:none;text-align:center;padding:1rem 0}
+.sent .clara-dot{margin:0 auto;width:3rem;height:3rem;font-size:1.3rem}
+
+/* ---------- Clara ---------- */
+.clara{background:linear-gradient(to bottom,var(--mist),var(--parchment));overflow-x:clip}
+.clara h2{font-size:clamp(2rem,3.6vw,3rem);line-height:1.1;max-width:42rem;margin:0 auto;text-align:center}
+.clara-grid{margin-top:4rem;display:grid;gap:3.5rem;align-items:center}
+@media (min-width:1024px){.clara-grid{grid-template-columns:1fr 1fr}}
+.acc-list{display:flex;flex-direction:column;gap:.75rem}
+.acc{border-radius:1.5rem;background:var(--sand-60);transition:background-color var(--dur-base) var(--ease-entrance),box-shadow var(--dur-base) var(--ease-entrance)}
+.acc:hover{background:var(--sand-80)}
+.acc.open{background:#fff;box-shadow:var(--shadow-soft)}
+.acc button.acc-h{display:flex;width:100%;align-items:center;justify-content:space-between;gap:1rem;padding:1.25rem 1.5rem;text-align:left;min-height:44px}
+.acc-h .t{font-family:var(--font-display);font-weight:500;font-size:1.15rem;line-height:1.3}
+@media (min-width:640px){.acc-h .t{font-size:var(--text-h3)}}
+.acc-h .ic{display:flex;width:2rem;height:2rem;flex-shrink:0;align-items:center;justify-content:center;border-radius:50%;background:#fff;transition:background-color var(--dur-base)}
+.acc.open .acc-h .ic{background:var(--sand)}
+.acc-h .ic svg{transition:transform var(--dur-base) var(--ease-entrance)}
+.acc.open .acc-h .ic svg{transform:rotate(45deg)}
+.acc-p{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--dur-base) var(--ease-entrance)}
+.acc.open .acc-p{grid-template-rows:1fr}
+.acc-p > div{overflow:hidden}
+.acc-p > div > div{padding:0 1.5rem 1.5rem;color:var(--teal-80)}
+.chat{position:relative;isolation:isolate;max-width:400px;width:100%;margin:0 auto}
+.chat .card-float{border-radius:26px;padding:1.5rem}
+.rx{margin-top:.75rem;border-radius:1rem;background:#fff;padding:1rem;box-shadow:var(--shadow-soft)}
+.me-bubble{margin:1rem 0 0 auto;max-width:85%;border-radius:1rem;border-top-right-radius:.375rem;background:var(--teal);color:var(--cream);padding:.55rem .8rem;font-size:.85rem;line-height:1.4;width:fit-content}
+
+/* ---------- FAQ ---------- */
+.faq{background:linear-gradient(to bottom,var(--parchment),var(--linen))}
+.faq .wrap{display:grid;gap:3rem 4rem}
+@media (min-width:1024px){.faq .wrap{grid-template-columns:minmax(260px,2fr) 3fr}.faq-left{position:sticky;top:7rem;align-self:start}}
+.faq h2{max-width:28rem;font-size:clamp(1.9rem,3.4vw,2.9rem);line-height:1.2;color:var(--teal-80)}
+.faq h2 a{white-space:nowrap;border-radius:.75rem;padding:0 .625rem;background:#fff;color:var(--teal);transition:color .15s}
+.faq h2 a:hover{color:var(--terracotta-ink)}
+.faq-cta{margin-top:2.5rem;max-width:28rem;border-radius:1.5rem;background:var(--sand-60);padding:1.5rem}
+
+/* ---------- Closing & footer ---------- */
+.closing{position:relative;isolation:isolate;padding:0 1.5rem 3rem;background:linear-gradient(to bottom,var(--linen),var(--cream))}
+.closing svg.amb{position:absolute;z-index:-1;left:6%;top:1rem;width:88%;opacity:.3;mix-blend-mode:multiply;pointer-events:none}
+.closing h2{margin:0 auto;max-width:64rem;padding:5rem 1.25rem;text-align:center;font-size:var(--text-display-xl);line-height:1.02;background:linear-gradient(to bottom,var(--pine),rgba(20,51,47,.05));-webkit-background-clip:text;background-clip:text;color:transparent}
+@media (min-width:640px){.closing h2{padding:7rem 1.25rem}}
+footer{padding:0 .5rem .5rem}
+@media (min-width:640px){footer{padding:0 .75rem .75rem}}
+.foot{border-radius:2.5rem;background:var(--pine);color:var(--cream)}
+.foot .wrap{padding-top:3.5rem;padding-bottom:3.5rem}
+@media (min-width:640px){.foot .wrap{padding-top:4rem;padding-bottom:4rem}}
+.foot-top{display:flex;flex-direction:column;gap:3rem}
+@media (min-width:768px){.foot-top{flex-direction:row;justify-content:space-between}}
+.foot-cols{display:grid;grid-template-columns:repeat(2,1fr);gap:2.5rem}
+@media (min-width:640px){.foot-cols{grid-template-columns:repeat(3,1fr)}}
+.foot-cols ul{margin-top:1rem;list-style:none;display:flex;flex-direction:column;gap:.625rem}
+.foot-cols a{font-size:var(--text-small);color:rgba(250,247,242,.9);transition:color .15s}
+.foot-cols a:hover{color:var(--cream)}
+.foot-bottom{margin-top:3.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem 1.5rem;border-top:1px solid rgba(250,247,242,.15);padding-top:1.5rem}
+
+/* ---------- Mobile (<768px) ---------- */
+@media (max-width:767px){
+  #disclaimer-banner{font-size:.72rem!important;padding:8px 12px!important;line-height:1.5}
+  .hero-cta-pill{padding:.5rem;gap:.75rem}
+  .hero-cta-pill p.hide-sm{display:none}
+  .hero-cta-pill .show-sm{display:flex}
+  .hero-cta-pill .numbers-link{padding-left:.75rem;font-size:var(--text-small);min-height:44px;display:flex;align-items:center}
+  .btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  .timeline{display:none}
+  .tl-mobile{display:block;position:relative;height:560px;margin-top:3.5rem}
+  .pillar-grid{margin-top:3.5rem}
+  .marquee-set{gap:2.5rem;padding-right:2.5rem}
+  .logo.jsv{height:2rem}.logo.ms{height:1.65rem}.logo.cmu{height:1.35rem}.logo.sw{height:2.1rem}
+  .stat-pair{grid-template-columns:1fr 1fr}
+  .stat .bignum{font-size:1.9rem}
+  .prow{height:4.25rem;gap:.6rem;padding:0 .6rem}
+  .prow .av{width:2rem;height:2rem}
+  .prow .chip{display:none}
+  .prow .row-sub{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
+  .caseload-top{flex-direction:column;align-items:flex-start;gap:.1rem}
+  .prow .reach{padding:.4rem .7rem;min-height:36px}
+  .seg{width:100%}
+  .seg button{flex:1;padding:.5rem .6rem}
+  .week-labels span{font-size:.7rem}
+  .week-labels .vl{display:none}
+  .result .lost{font-size:3rem}
+  .line .v{font-size:1.35rem}
+  .line.total .v{font-size:1.8rem}
+  .foot-cols{grid-template-columns:repeat(2,1fr)}
+  .sum{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Disclaimer banner -->
+<div id="disclaimer-banner" style="position:fixed;top:0;left:0;right:0;z-index:200;background:#fdf2f2;border-bottom:1px solid #f5c6c6;padding:9px 24px;text-align:center;font-size:0.8rem;color:#666;font-family:inherit;">
+  <strong>Landing-page feature concept</strong> for
+  <a href="https://revora.health/" target="_blank" rel="noopener" style="color:#333;text-decoration:underline;font-weight:500;">Revora Health</a>
+  · Built by <a href="https://www.linkedin.com/in/sarthak-saharan/" target="_blank" rel="noopener" style="color:#333;text-decoration:underline;font-weight:500;">Sarthak Saharan</a>
+  · Demo data only, not affiliated with Revora Health.
+</div>
+
+<!-- Header -->
+<div id="main-header">
+  <div class="nav-pill">
+    <a href="#top" aria-label="Revora Health home"><img src="assets/revora-wordmark-teal.svg" alt="Revora Health" width="95" height="33" /></a>
+    <button class="burger" type="button" aria-expanded="false" aria-controls="site-menu"><span></span><span></span><em style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Open menu</em></button>
+  </div>
+  <nav id="site-menu" aria-label="Main">
+    <a class="link" href="#pillars">For clinics</a>
+    <a class="link" href="#features">For patients</a>
+    <a class="link new" href="#numbers">Your numbers</a>
+    <a class="link" href="#faq">FAQ</a>
+    <a class="btn btn-teal" href="#" data-demo style="margin-left:.25rem">Book a demo</a>
+  </nav>
+</div>
+
+<main id="top">
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <img class="hero-bg" src="assets/hero-poster.jpg" alt="" />
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="hero-body">
+      <h1 id="hero-heading" class="display load-rise-plain beat-1">Most of physical therapy<br />happens <em class="load-accent">at home</em></h1>
+      <p class="lead hero-sub load-rise beat-2">Revora keeps the plan moving between visits, for patients and the clinics behind them</p>
+    </div>
+    <div class="hero-cta">
+      <div class="hero-cta-pill load-rise beat-2">
+        <p class="small hide-sm">No new hardware. No busywork. <a class="numbers-link" href="#numbers">See what it’s worth to your clinic</a></p>
+        <a class="numbers-link small show-sm" href="#numbers">Your numbers</a>
+        <a class="btn btn-white" href="#" data-demo>Book a demo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Intro stat -->
+  <section class="intro" aria-labelledby="intro-heading">
+    <div class="wrap">
+      <p class="display intro-stat reveal">About <span class="acc">seven in ten</span> outpatient PT patients stop before finishing their plan of care.</p>
+      <p class="small src reveal" style="margin-top:1.25rem;color:var(--teal-80)">Source: <a href="https://www.webpt.com/blog/expectation-vs-reality-why-patients-really-drop-out-of-therapy" target="_blank" rel="noopener noreferrer">WebPT</a></p>
+      <div class="rule reveal beat-2" aria-hidden="true"></div>
+      <h2 id="intro-heading" class="display reveal beat-3">Recovery doesn’t pause between visits. With Revora, neither does the clinic.</h2>
+    </div>
+  </section>
+
+  <!-- Backers -->
+  <div class="backers">
+    <h2 class="eyebrow" style="text-align:center;color:var(--teal-80)">Backed by</h2>
+    <div class="marquee">
+      <div class="marquee-track">
+        <div class="marquee-set"><span class="logo jsv" role="img" aria-label="Jackson Square Ventures"></span><span class="logo ms" role="img" aria-label="Microsoft"></span><span class="logo cmu" role="img" aria-label="Carnegie Mellon University"></span><span class="logo sw" role="img" aria-label="Swartz Center for Entrepreneurship"></span></div>
+        <div class="marquee-set" aria-hidden="true"><span class="logo jsv"></span><span class="logo ms"></span><span class="logo cmu"></span><span class="logo sw"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pillars -->
+  <section class="pillars" id="pillars" aria-labelledby="pillars-heading">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="lead muted" style="max-width:28rem;text-wrap:balance">Traditional follow-up does not reach the living room</p>
+        <h2 id="pillars-heading" class="display">We’re built for the days in between</h2>
+      </div>
+
+      <!-- desktop timeline -->
+      <div class="timeline reveal beat-2" aria-hidden="true">
+        <span class="tl-visit" style="left:0"></span><span class="tl-visit" style="right:0"></span>
+        <span class="tl-label" style="left:0">Visit</span><span class="tl-label" style="right:0">Visit</span>
+        <div class="tl-line"></div>
+        <div class="tl-ticks"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="tl-node up" style="left:16.6667%">
+          <div class="card-float" style="width:236px">
+            <p class="sage-ink" style="padding:0 .25rem;font-size:.75rem">Tuesday’s plan</p>
+            <div style="margin-top:.5rem;display:flex;flex-direction:column;gap:.375rem">
+              <button class="plan-row" type="button" role="checkbox" aria-checked="false"><span class="tick"><svg width="12" height="12" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.5 4 8l4.5-6" stroke="#faf7f2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><span class="row-title">Heel slides</span><span class="row-sub">2 sets of 10</span></span></button>
+              <button class="plan-row" type="button" role="checkbox" aria-checked="false"><span class="tick"><svg width="12" height="12" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.5 4 8l4.5-6" stroke="#faf7f2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><span class="row-title">Glute bridges</span><span class="row-sub">2 sets of 12</span></span></button>
+            </div>
+          </div>
+          <span class="tl-stem"></span><span class="tl-knob"></span>
+        </div>
+        <div class="tl-node down" style="left:50%">
+          <div class="card-float" style="width:252px">
+            <div style="display:flex;align-items:center;gap:.5rem;padding:0 .25rem"><span class="clara-dot">C</span><span style="font-size:.8rem;font-weight:500">Clara</span></div>
+            <span class="bubble">Soreness after step-ups is normal. Keep going, and tell me if it sharpens.</span>
+          </div>
+          <span class="tl-stem"></span><span class="tl-knob"></span>
+        </div>
+        <div class="tl-node up" style="left:83.3333%">
+          <div class="card-float" style="width:236px;position:relative">
+            <p class="sage-ink" style="padding:0 .25rem;font-size:.75rem">Cedarline Physical Therapy · today</p>
+            <div style="margin-top:.5rem;display:flex;align-items:center;gap:.75rem;border-radius:1rem;background:var(--sand-50);padding:.625rem .75rem">
+              <span class="av" style="width:2rem;height:2rem;font-size:.65rem">JO</span>
+              <span><span class="row-title" style="font-size:.85rem;font-weight:500">J. Okafor</span><span class="row-sub" style="font-size:.75rem">a few quiet days</span></span>
+              <span class="dot hollow"></span>
+            </div>
+            <p class="rtm-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 5.8v5.4c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V5.8Z"/><path d="m9 11.5 2.2 2.3L15.5 9"/></svg>RTM · captured</p>
+          </div>
+          <span class="tl-stem"></span><span class="tl-knob"></span>
+        </div>
+      </div>
+
+      <!-- mobile timeline -->
+      <div class="tl-mobile reveal beat-2" aria-hidden="true">
+        <p style="position:absolute;left:0;top:0;display:flex;align-items:center;gap:.75rem;font-size:.75rem" class="sage-ink"><span style="width:.75rem;height:.75rem;border-radius:50%;background:var(--terracotta);display:block"></span>Visit</p>
+        <p style="position:absolute;left:0;bottom:0;display:flex;align-items:center;gap:.75rem;font-size:.75rem" class="sage-ink"><span style="width:.75rem;height:.75rem;border-radius:50%;background:var(--terracotta);display:block"></span>Visit</p>
+        <div style="position:absolute;left:5px;top:1.5rem;bottom:1.5rem;width:1px;background:var(--teal-35)"></div>
+        <div style="position:absolute;left:2.5rem;right:0;top:1.5rem;bottom:1.5rem;display:grid;grid-template-rows:repeat(3,1fr)">
+          <div style="display:flex;align-items:center"><div class="card-float" style="width:236px"><p class="sage-ink" style="font-size:.75rem">Tuesday’s plan</p><div style="margin-top:.5rem;display:flex;flex-direction:column;gap:.375rem"><div class="plan-row"><span class="tick"></span><span><span class="row-title">Heel slides</span><span class="row-sub">2 sets of 10</span></span></div><div class="plan-row"><span class="tick"></span><span><span class="row-title">Glute bridges</span><span class="row-sub">2 sets of 12</span></span></div></div></div></div>
+          <div style="display:flex;align-items:center"><div class="card-float" style="width:252px"><div style="display:flex;align-items:center;gap:.5rem"><span class="clara-dot">C</span><span style="font-size:.8rem;font-weight:500">Clara</span></div><span class="bubble">Soreness after step-ups is normal. Keep going, and tell me if it sharpens.</span></div></div>
+          <div style="display:flex;align-items:center"><div class="card-float" style="width:236px;position:relative"><p class="sage-ink" style="font-size:.75rem">Cedarline Physical Therapy · today</p><div style="margin-top:.5rem;display:flex;align-items:center;gap:.75rem;border-radius:1rem;background:var(--sand-50);padding:.625rem .75rem"><span class="av" style="width:2rem;height:2rem;font-size:.65rem">JO</span><span><span class="row-title" style="font-size:.85rem;font-weight:500">J. Okafor</span><span class="row-sub" style="font-size:.75rem">a few quiet days</span></span><span class="dot hollow"></span></div><p class="rtm-badge">RTM · captured</p></div></div>
+        </div>
+      </div>
+
+      <div class="pillar-grid">
+        <article class="pillar reveal beat-1">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="19.5" r="2"/><circle cx="19.5" cy="4.5" r="2"/><path d="M6 18c5 -1 2.5 -6.5 7 -7.5S17.5 7 18 6.5"/></svg>
+          <h3 class="display">Patients keep momentum</h3>
+          <p>The home program guides, logs, and encourages, so the plan keeps moving after everyone goes home.</p>
+        </article>
+        <article class="pillar reveal beat-2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.2c1.2-2.4 4.8-2.1 5.3.6.4 2.1-2.2 4-5.3 6.2-3.1-2.2-5.7-4.1-5.3-6.2.5-2.7 4.1-3 5.3-.6Z"/><path d="M4 19.5c3 1.5 13 1.5 16 0"/></svg>
+          <h3 class="display">Clinics see who needs a hand</h3>
+          <p>Quiet days surface before they become cancelled appointments, and a glance orders the caseload by who needs attention.</p>
+        </article>
+        <article class="pillar reveal beat-3">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 5.8v5.4c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V5.8Z"/><path d="m9 11.5 2.2 2.3L15.5 9"/></svg>
+          <h3 class="display">RTM revenue, captured</h3>
+          <p>Remote therapeutic monitoring, billed for the between-visit work the clinic is already doing.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features" aria-labelledby="features-heading">
+    <div class="wrap">
+      <div class="feat-left">
+        <h2 id="features-heading" class="display">Everything recovery needs to keep moving</h2>
+        <div class="feat-tabs" role="tablist">
+          <button type="button" class="on" data-go="fc0">A patient app</button>
+          <button type="button" data-go="fc1">Clara, your companion</button>
+          <button type="button" data-go="fc2">A provider view</button>
+        </div>
+        <div class="feat-foot">
+          <p class="lead muted">Care continues between appointments. Now the clinic can too.</p>
+          <a class="btn btn-teal" href="#" data-demo style="margin-top:1.25rem">Book a demo</a>
+        </div>
+      </div>
+      <div class="feat-cards">
+        <article class="feat-card" id="fc0">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="4"/><path d="M12 4.5v2M4.5 13h-2M21.5 13h-2M6.7 7.7 5.3 6.3M17.3 7.7l1.4-1.4M4 19.5h16"/></svg>
+          <h3 class="display">A patient app</h3>
+          <div class="feat-stage">
+            <div class="glow"></div>
+            <div class="phone" id="phone">
+              <div style="display:flex;align-items:center;gap:1.25rem">
+                <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="#e7dfd2" stroke-width="8"/><circle class="prog" cx="50" cy="50" r="42" fill="none" stroke="#c96f4a" stroke-width="8" stroke-linecap="round" pathLength="1" stroke-dasharray="0 1"/></svg><span id="ring-n">0/3</span></div>
+                <div><p class="sage-ink" style="font-size:.8rem">Good morning, Maya</p><p class="display" style="margin-top:.125rem;font-size:1.6rem;line-height:1.25">Tuesday’s plan</p></div>
+              </div>
+              <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.5rem">
+                <div class="pill-row"><span class="tick"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.5 4 8l4.5-6" stroke="#faf7f2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="small" style="flex:1">Heel slides</span><span class="sage-ink" style="font-size:.8rem">2 sets of 10</span></div>
+                <div class="pill-row"><span class="tick"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.5 4 8l4.5-6" stroke="#faf7f2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="small" style="flex:1">Glute bridges</span><span class="sage-ink" style="font-size:.8rem">2 sets of 12</span></div>
+                <div class="pill-row"><span class="tick"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5.5 4 8l4.5-6" stroke="#faf7f2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="small" style="flex:1">Step-ups at the stairs</span><span class="sage-ink" style="font-size:.8rem">3 sets of 8</span></div>
+              </div>
+              <p class="bubble" style="margin-top:1rem;border-top-left-radius:1rem;border-top-right-radius:.375rem;margin-left:auto;width:fit-content">Felt steadier on the stairs today.</p>
+              <p class="sage-ink" style="margin-top:.4rem;font-size:.72rem;text-align:right">Logged and shared with the clinic</p>
+            </div>
+          </div>
+          <p>Exercises, logging, and encouragement, in the patient’s pocket. When something does not feel right, help is easy to reach.</p>
+        </article>
+        <article class="feat-card" id="fc1">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L3.5 20l1.4-5.3a8 8 0 1 1 15.6-3.2Z"/><path d="M8.5 10.5h7M8.5 13.5h4"/></svg>
+          <h3 class="display">Clara, your companion</h3>
+          <div class="feat-stage">
+            <div class="glow"></div>
+            <div class="phone">
+              <div style="display:flex;align-items:center;gap:.5rem"><span class="av" style="width:1.5rem;height:1.5rem;font-size:.7rem;background:var(--sage)">M</span><span style="font-size:.8rem;font-weight:500">Maya</span></div>
+              <p class="me-bubble" style="margin-left:0;border-top-right-radius:1rem;border-top-left-radius:.375rem;background:var(--sand-70);color:var(--teal)">A sharp twinge when I twist. Should I worry?</p>
+              <div style="display:flex;align-items:center;gap:.5rem;margin-top:1.25rem"><span class="clara-dot">C</span><span style="font-size:.8rem;font-weight:500">Clara</span></div>
+              <span class="bubble">That deserves your therapist’s eyes. I sent your note over so they can take a look.</span>
+              <p class="rx" style="display:flex;align-items:center;gap:.6rem;font-size:.8rem"><span class="dot terra" style="margin:0"></span>Cedarline Physical Therapy <span class="sage-ink" style="margin-left:auto">Shared with your clinic</span></p>
+            </div>
+          </div>
+          <p>Clara answers questions between visits, keeps momentum up on the hard days, and makes sure the therapist sees what matters.</p>
+        </article>
+        <article class="feat-card" id="fc2">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.2c1.2-2.4 4.8-2.1 5.3.6.4 2.1-2.2 4-5.3 6.2-3.1-2.2-5.7-4.1-5.3-6.2.5-2.7 4.1-3 5.3-.6Z"/><path d="M4 19.5c3 1.5 13 1.5 16 0"/></svg>
+          <h3 class="display">A provider view</h3>
+          <div class="feat-stage">
+            <div class="glow"></div>
+            <div style="width:100%;max-width:400px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 .25rem"><p class="display" style="font-size:1.15rem">Cedarline Physical Therapy</p><p class="sage-ink" style="font-size:.8rem">18 patients today</p></div>
+              <div class="stack">
+                <div class="stack-card" style="z-index:1;opacity:.34;transform:translateY(-78px) scale(.85)"><span class="av" style="width:2.5rem;height:2.5rem;font-size:.75rem">MH</span><span><span class="row-title" style="font-weight:500">M. Herrera</span><span class="row-sub">keeping pace</span></span><span class="dot sage"></span></div>
+                <div class="stack-card" style="z-index:2;opacity:.56;transform:translateY(-52px) scale(.9)"><span class="av" style="width:2.5rem;height:2.5rem;font-size:.75rem">RP</span><span><span class="row-title" style="font-weight:500">R. Padilla</span><span class="row-sub">finished this week’s plan</span></span><span class="dot sage"></span></div>
+                <div class="stack-card" style="z-index:3;opacity:.78;transform:translateY(-26px) scale(.95)"><span class="av" style="width:2.5rem;height:2.5rem;font-size:.75rem">AL</span><span><span class="row-title" style="font-weight:500">A. Lindqvist</span><span class="row-sub">moving right along</span></span><span class="dot sage"></span></div>
+                <div class="stack-card" style="z-index:4"><span class="av" style="width:2.5rem;height:2.5rem;font-size:.75rem">JO</span><span><span class="row-title" style="font-weight:500">J. Okafor</span><span class="row-sub">a few quiet days</span></span><span class="dot hollow"></span></div>
+              </div>
+            </div>
+          </div>
+          <p>One screen showing who needs attention today, ordered by who needs it most. Staying connected to a whole caseload takes a glance. <a href="#numbers" style="text-decoration:underline;text-underline-offset:4px;color:var(--teal)">Try it with a week of data ↓</a></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NEW FEATURE ================= -->
+  <section class="numbers" id="numbers" aria-labelledby="numbers-heading">
+    <div class="wrap">
+      <div class="reveal">
+        <span class="concept-tag"><i></i>For clinic owners</span>
+        <h2 id="numbers-heading" class="display">What quiet days cost, and what <em>they could return</em></h2>
+        <p class="lead intro-lead">Play one week between visits for a sample caseload. Then put in your clinic’s numbers and see what catching patients early could be worth over a year.</p>
+      </div>
+
+      <!-- Step 1: triage simulator -->
+      <div class="step-label reveal"><b>1</b><span class="eyebrow">A week between visits</span></div>
+      <h3 class="display step-title reveal">Scrub through the week. Watch who goes quiet.</h3>
+      <p class="step-copy reveal">With Revora, the caseload reorders itself as patients stop logging, so the clinic can reach out while there’s still time. Without it, the first sign is usually a cancelled appointment.</p>
+
+      <div class="sim reveal beat-1">
+        <div class="panel">
+          <div class="sim-head">
+            <div class="seg" role="tablist" aria-label="View mode">
+              <button type="button" class="on" data-mode="with" role="tab" aria-selected="true">With Revora</button>
+              <button type="button" data-mode="without" role="tab" aria-selected="false">Without Revora</button>
+            </div>
+            <button type="button" class="btn btn-ghost play" id="play"><svg viewBox="0 0 12 12" fill="currentColor" id="play-ic"><path d="M2.5 1.5v9l8-4.5z"/></svg><span id="play-t">Play the week</span></button>
+          </div>
+
+          <div class="caseload">
+            <div class="caseload-top">
+              <p class="display">Cedarline Physical Therapy</p>
+              <p class="sage-ink" style="font-size:.8rem;white-space:nowrap" id="day-caption">Monday · 8 patients</p>
+            </div>
+            <div class="rows" id="rows" aria-live="polite"></div>
+          </div>
+
+          <div class="week" aria-label="Day of the week">
+            <div class="week-track" id="week-track">
+              <div class="week-line"></div>
+              <div class="week-fill" id="week-fill"></div>
+              <span class="week-visit" style="left:0"></span>
+              <span class="week-visit" style="left:100%"></span>
+              <div class="week-cursor" id="week-cursor"></div>
+              <input type="range" id="day" min="1" max="7" step="1" value="1" aria-label="Day of the week" style="left:6.25%;right:6.25%;width:87.5%" />
+            </div>
+            <div class="week-labels" id="week-labels"></div>
+          </div>
+        </div>
+
+        <div class="story">
+          <div class="stat-pair">
+            <div class="stat" id="stat-a"><div class="bignum" id="stat-a-n">0</div><div class="lbl" id="stat-a-l">patients surfaced before they cancelled</div></div>
+            <div class="stat" id="stat-b"><div class="bignum" id="stat-b-n">0</div><div class="lbl" id="stat-b-l">reached out to, back on plan</div></div>
+          </div>
+          <div class="story-card">
+            <p class="eyebrow sage-ink">What the clinic sees</p>
+            <ul class="log" id="log" style="margin-top:.9rem"></ul>
+          </div>
+          <div class="story-card" style="background:#fff;box-shadow:var(--shadow-soft)">
+            <p class="small muted" id="bridge">Press play, or drag across the week. When a patient goes quiet, press <b>Reach out</b>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: calculator -->
+      <div class="step-label reveal" style="margin-top:6rem"><b>2</b><span class="eyebrow">Your clinic, in numbers</span></div>
+      <h3 class="display step-title reveal">Now scale it to a year at your clinic.</h3>
+      <p class="step-copy reveal">Move the sliders to match your clinic. Every figure updates as you go, and the assumptions are listed below the result.</p>
+
+      <div class="calc reveal beat-1">
+        <div class="panel" id="inputs">
+          <div class="field">
+            <div class="field-top"><label for="in-pts">New patients a month</label><output id="o-pts"></output></div>
+            <input class="range" type="range" id="in-pts" min="20" max="600" step="10" value="120" />
+          </div>
+          <div class="field">
+            <div class="field-top"><label for="in-visits">Visits in a typical plan of care</label><output id="o-visits"></output></div>
+            <input class="range" type="range" id="in-visits" min="4" max="24" step="1" value="12" />
+          </div>
+          <div class="field">
+            <div class="field-top"><label for="in-rate">Average revenue per visit</label><output id="o-rate"></output></div>
+            <input class="range" type="range" id="in-rate" min="60" max="200" step="5" value="105" />
+          </div>
+          <div class="field">
+            <div class="field-top"><label for="in-done">Patients who finish their plan today</label><output id="o-done"></output></div>
+            <p class="hint">WebPT puts this near 30% across outpatient PT.</p>
+            <input class="range" type="range" id="in-done" min="10" max="80" step="1" value="30" />
+          </div>
+          <div class="field">
+            <div class="field-top"><label for="in-lift">More patients who finish with Revora</label><output id="o-lift"></output></div>
+            <p class="hint">Percentage points. The simulation above caught <span id="lift-hint">some</span> quiet patients in one week.</p>
+            <input class="range" type="range" id="in-lift" min="0" max="30" step="1" value="10" />
+          </div>
+          <div class="field">
+            <div class="field-top"><label for="in-rtm">Patients enrolled in RTM</label><output id="o-rtm"></output></div>
+            <input class="range" type="range" id="in-rtm" min="0" max="100" step="5" value="50" />
+          </div>
+          <div class="field">
+            <div class="field-top"><label for="in-rtmrate">RTM revenue per enrolled patient, per month</label><output id="o-rtmrate"></output></div>
+            <p class="hint">Illustrative blended rate. Real reimbursement depends on codes, payers and documentation.</p>
+            <input class="range" type="range" id="in-rtmrate" min="40" max="160" step="5" value="90" />
+          </div>
+        </div>
+
+        <div class="result" aria-live="polite">
+          <p class="eyebrow">Left on the table each year</p>
+          <p class="display lost" id="r-lost">$0</p>
+          <p class="lost-sub" id="r-lost-sub">in visits that never happen after patients stop.</p>
+
+          <div class="bar" aria-hidden="true"><span class="b-kept" id="bar-kept"></span><span class="b-rtm" id="bar-rtm"></span></div>
+          <div class="legend"><span><i style="background:var(--sand)"></i>Visits kept</span><span><i style="background:var(--terracotta)"></i>RTM captured</span><span><i style="background:rgba(250,247,242,.25)"></i>Still lost</span></div>
+
+          <div class="lines">
+            <div class="line"><span class="k">Visits kept with Revora<small id="r-kept-sub">0 more patients finish their plan</small></span><span class="v" id="r-kept">$0</span></div>
+            <div class="line"><span class="k">RTM revenue captured<small id="r-rtm-sub">between-visit work, billed</small></span><span class="v" id="r-rtm">$0</span></div>
+            <div class="line total"><span class="k">What Revora could return, per year</span><span class="v" id="r-total">$0</span></div>
+          </div>
+
+          <div class="result-cta">
+            <a class="btn btn-cream" href="#" data-demo>Book a demo with these numbers</a>
+            <span class="note">Your numbers come along with the request.</span>
+          </div>
+
+          <details class="assume">
+            <summary>How this is calculated</summary>
+            <ul>
+              <li>Patients a year = new patients a month × 12.</li>
+              <li>Patients who stop early attend about half of their plan, on average.</li>
+              <li>Left on the table = patients who stop × half the plan’s visits × revenue per visit.</li>
+              <li>Visits kept = the extra patients who finish × half the plan’s visits × revenue per visit.</li>
+              <li>RTM = enrolled patients × months in care (visits ÷ 2 a week) × monthly RTM rate.</li>
+              <li>Illustrative only. These are not Revora’s published figures.</li>
+            </ul>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ================= /NEW FEATURE ================= -->
+
+  <!-- Clara -->
+  <section class="clara" aria-labelledby="clara-heading">
+    <div class="wrap">
+      <h2 id="clara-heading" class="display reveal">Meet Clara, your companion who keeps the plan moving</h2>
+      <div class="clara-grid">
+        <div class="acc-list reveal" data-acc>
+          <div class="acc open"><button class="acc-h" type="button" aria-expanded="true"><span class="t">Answers in plain language</span><span class="ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span></button><div class="acc-p"><div><div>Soreness or setback, a question about form, a nudge on a hard day. Clara meets patients where they are, in words they understand.</div></div></div></div>
+          <div class="acc"><button class="acc-h" type="button" aria-expanded="false"><span class="t">Knows when to loop in the therapist</span><span class="ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span></button><div class="acc-p"><div><div>Some things need clinical judgment. Clara flags those and passes them to the clinic, so nothing important waits for the next visit.</div></div></div></div>
+          <div class="acc"><button class="acc-h" type="button" aria-expanded="false"><span class="t">Never changes the plan</span><span class="ic"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span></button><div class="acc-p"><div><div>Clinicians make every clinical decision. Clara does not diagnose, prescribe, or change a program.</div></div></div></div>
+        </div>
+        <div class="chat reveal beat-2">
+          <div class="glow"></div>
+          <div class="card-float">
+            <p class="sage-ink" style="font-size:.75rem">From your plan</p>
+            <div class="rx">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem"><p class="display" style="font-size:1.05rem">Today’s new exercise</p><span class="chip sage">Prescribed</span></div>
+              <p class="small" style="margin-top:.35rem">Lateral step-down · 3 × 8 · eccentric control</p>
+            </div>
+            <p class="me-bubble">What does eccentric mean here?</p>
+            <div style="display:flex;align-items:flex-start;gap:.5rem;margin-top:1rem"><span class="clara-dot">C</span><span class="bubble" style="margin-top:0">Step down slowly off the bottom stair, leading with your right foot. Three rounds of eight, and stop if it pinches.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <div class="faq" id="faq">
+    <div class="wrap">
+      <div class="faq-left">
+        <h2 class="display">We are here to help. If you did not find your answer, <a href="mailto:hello@example.com">email us</a> anytime.</h2>
+        <div class="faq-cta">
+          <p class="muted">Rather talk it through? We will walk through Revora in your clinic’s context.</p>
+          <a class="btn btn-teal" href="#" data-demo style="margin-top:1.25rem">Book a demo</a>
+        </div>
+      </div>
+      <div class="acc-list" data-acc id="faq-list"></div>
+    </div>
+  </div>
+
+  <!-- Closing -->
+  <section class="closing" aria-labelledby="home-closing">
+    <svg class="amb" viewBox="0 0 1000 250" fill="none" aria-hidden="true"><path d="M14 110 C60 99, 202.3 33, 290 44 C377.7 55, 455 176, 540 176 C625 176, 725.7 55, 800 44 C874.3 33, 955 99, 986 110" stroke="#0e4b44" stroke-opacity=".45" stroke-width="1.5" stroke-linecap="round"/><circle cx="290" cy="44" r="26" fill="#f2ecdf"/><circle cx="290" cy="44" r="26" stroke="#0e4b44" stroke-opacity=".25"/><circle cx="540" cy="176" r="26" fill="#f2ecdf"/><circle cx="540" cy="176" r="26" stroke="#0e4b44" stroke-opacity=".25"/><circle cx="800" cy="44" r="26" fill="#f2ecdf"/><circle cx="800" cy="44" r="26" stroke="#0e4b44" stroke-opacity=".25"/><circle cx="14" cy="110" r="6" fill="#c96f4a"/><circle cx="986" cy="110" r="6" fill="#c96f4a"/></svg>
+    <h2 id="home-closing" class="display reveal">Care that continues<br />between visits</h2>
+  </section>
+</main>
+
+<footer>
+  <div class="foot">
+    <div class="wrap">
+      <div class="foot-top">
+        <div style="max-width:28rem">
+          <img src="assets/revora-wordmark-cream.svg" alt="Revora Health" width="132" height="46" />
+          <p style="margin-top:1.5rem;color:rgba(250,247,242,.9)">See Revora in your clinic’s context.</p>
+          <a class="btn btn-cream" href="#" data-demo style="margin-top:1rem">Book a demo</a>
+          <p class="small" style="margin-top:2rem;color:rgba(250,247,242,.6)">Revora Health is care continuity infrastructure for outpatient physical therapy. We keep clinics connected to their patients between visits, so more patients complete their plan of care and clinics capture remote therapeutic monitoring revenue.</p>
+        </div>
+        <div class="foot-cols">
+          <div><h2 class="eyebrow" style="color:var(--sand)">Information</h2><ul><li><a href="#top">Home</a></li><li><a href="#pillars">For clinics</a></li><li><a href="#features">For patients</a></li><li><a href="#numbers">Your numbers</a></li><li><a href="#faq">FAQ</a></li></ul></div>
+          <div><h2 class="eyebrow" style="color:var(--sand)">Company</h2><ul><li><a href="https://revora.health/blog" target="_blank" rel="noopener">Blog and news</a></li><li><a href="https://revora.health/careers" target="_blank" rel="noopener">Careers</a></li><li><a href="https://revora.health/contact" target="_blank" rel="noopener">Contact</a></li></ul></div>
+          <div><h2 class="eyebrow" style="color:var(--sand)">Social</h2><ul><li><a href="https://www.linkedin.com/company/tryrevorahealth" target="_blank" rel="noopener noreferrer">LinkedIn</a></li></ul></div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <p class="small" style="color:rgba(250,247,242,.6)">Feature concept by Sarthak Saharan. Not affiliated with Revora Health, Inc.</p>
+        <div style="display:flex;gap:1.5rem"><a class="small" style="color:rgba(250,247,242,.7)" href="https://revora.health/privacy" target="_blank" rel="noopener">Privacy</a><a class="small" style="color:rgba(250,247,242,.7)" href="https://revora.health/terms" target="_blank" rel="noopener">Terms</a></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Demo request modal -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-card">
+    <button class="modal-x" type="button" id="modal-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transform:rotate(45deg)"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <div id="modal-form">
+      <p class="eyebrow sage-ink">Book a demo</p>
+      <h3 class="display" id="modal-title" style="margin-top:.5rem">We’ll walk through Revora with your numbers</h3>
+      <div class="sum" id="sum"></div>
+      <form class="form" id="demo-form">
+        <label>Your name<input required placeholder="Dr. Jordan Lee" autocomplete="off" /></label>
+        <label>Clinic<input required placeholder="Cedarline Physical Therapy" autocomplete="off" /></label>
+        <label>Work email<input required type="email" placeholder="jordan@cedarlinept.com" autocomplete="off" /></label>
+        <button class="btn btn-teal" type="submit" style="margin-top:.5rem;width:100%;min-height:48px">Request a demo</button>
+        <p class="sage-ink" style="font-size:.75rem;text-align:center">Prototype form. Nothing is sent anywhere.</p>
+      </form>
+    </div>
+    <div class="sent" id="sent">
+      <span class="clara-dot">C</span>
+      <h3 class="display" style="margin-top:1rem">Thanks, you’re on the list</h3>
+      <p class="muted small" style="margin-top:.5rem">In the real product, your team would get a walkthrough built around these numbers. This is a demo, so nothing was sent.</p>
+      <button class="btn btn-teal" type="button" id="sent-close" style="margin-top:1.25rem">Back to the page</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Header: position under banner, menu, hide on scroll ---------- */
+const header = document.getElementById('main-header');
+const banner = document.getElementById('disclaimer-banner');
+function positionHeader(){ header.style.top = (banner.offsetHeight + (innerWidth >= 640 ? 20 : 16)) + 'px'; }
+positionHeader(); addEventListener('resize', positionHeader);
+const burger = document.querySelector('.burger'), menu = document.getElementById('site-menu');
+burger.addEventListener('click', () => { const o = burger.getAttribute('aria-expanded') !== 'true'; burger.setAttribute('aria-expanded', o); menu.classList.toggle('open', o); });
+menu.addEventListener('click', e => { if (e.target.closest('a')) { burger.setAttribute('aria-expanded', false); menu.classList.remove('open'); } });
+let lastY = scrollY;
+addEventListener('scroll', () => { const y = scrollY; header.classList.toggle('hide', y > lastY && y > 400 && !menu.classList.contains('open')); lastY = y; }, { passive: true });
+
+/* ---------- Reveal on scroll ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ---------- Pillar plan checkboxes ---------- */
+document.querySelectorAll('button.plan-row').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true')));
+
+/* ---------- Patient app ring ---------- */
+(() => {
+  const rows = [...document.querySelectorAll('#phone .pill-row')], prog = document.querySelector('.ring .prog'), n = document.getElementById('ring-n');
+  let i = 0, started = false;
+  function step(){ if (i < rows.length) { rows[i].classList.add('done'); i++; } else { rows.forEach(r => r.classList.remove('done')); i = 0; }
+    prog.setAttribute('stroke-dasharray', (i / 3) + ' 1'); n.textContent = i + '/3'; }
+  new IntersectionObserver(es => { if (es[0].isIntersecting && !started) { started = true; setInterval(step, 1500); } }).observe(document.getElementById('phone'));
+})();
+
+/* ---------- Feature tabs ---------- */
+const tabs = document.querySelectorAll('.feat-tabs button');
+tabs.forEach(t => t.addEventListener('click', () => document.getElementById(t.dataset.go).scrollIntoView({ behavior: 'smooth', block: 'center' })));
+const tabIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) tabs.forEach(t => t.classList.toggle('on', t.dataset.go === e.target.id)); }), { rootMargin: '-45% 0px -45% 0px' });
+document.querySelectorAll('.feat-card').forEach(c => tabIO.observe(c));
+
+/* ---------- Accordions ---------- */
+const FAQ = [
+  ['What is Revora?', 'Revora Health is care continuity infrastructure for outpatient physical therapy. We keep clinics connected to their patients between visits, so more patients complete their plan of care and clinics capture remote therapeutic monitoring revenue. Patients get a guided home program with Clara, an in-app companion, and clinicians get one screen showing who needs attention today.'],
+  ['Does Clara replace my physical therapist?', 'No. Clinicians make every clinical decision. Clara answers everyday questions between visits, encourages patients on hard days, and flags anything that needs clinical judgment for the therapist.'],
+  ['Do I need any new equipment?', 'No. Revora runs on the phone you already have. There is nothing to buy, wear, or set up.'],
+  ['How do clinics use Revora day to day?', 'The provider view orders the caseload by who needs attention, so staying connected takes a glance rather than a phone tree. Revora fits into the systems a clinic already runs on, and the between-visit work it captures supports remote therapeutic monitoring billing.'],
+  ['Does this add work for our front desk?', 'No. Patients are set up during a visit, by the clinician already in the room with them. Scheduling and intake stay exactly where they are.'],
+  ['What happens if a patient does not use the app?', 'Some will not, and knowing that early is the point. A quiet stretch shows up in the provider view while there is still time to reach out, rather than arriving later as a cancelled appointment.'],
+  ['Will this work with the systems we already use?', 'Revora is built to fit into the systems a clinic already runs on. What that looks like depends on your setup. Book a demo to see how we can work with yours.'],
+  ['Who handles the billing side?', 'It depends on how your clinic is set up today. Revora keeps the record of the between-visit work, so the documentation is there when you need it. We will work with your team to make sure Revora fits in smoothly.'],
+  ['How is patient data handled?', 'Carefully and minimally. Patient information is used to support care, not sold or used for advertising. The privacy policy covers this in plain language.'],
+  ['How do we get started?', 'Book a demo and we will walk through Revora in your clinic’s context.']
+];
+const plus = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+document.getElementById('faq-list').innerHTML = FAQ.map(([q, a], i) => `<div class="acc${i === 0 ? ' open' : ''}"><button class="acc-h" type="button" aria-expanded="${i === 0}"><span class="t">${q}</span><span class="ic">${plus}</span></button><div class="acc-p"><div><div>${a}</div></div></div></div>`).join('');
+document.querySelectorAll('[data-acc]').forEach(list => list.addEventListener('click', e => {
+  const h = e.target.closest('.acc-h'); if (!h) return;
+  const item = h.parentElement, open = !item.classList.contains('open');
+  list.querySelectorAll('.acc').forEach(a => { a.classList.remove('open'); a.querySelector('.acc-h').setAttribute('aria-expanded', false); });
+  if (open) { item.classList.add('open'); h.setAttribute('aria-expanded', true); }
+}));
+
+/* ================= FEATURE 1: caseload triage simulator ================= */
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// log[d] = 1 if the patient logged on day d (0-indexed Mon..Sun). msg = day index a message came in.
+const PATIENTS = [
+  { id: 'AL', name: 'A. Lindqvist', log: [1,1,1,1,1,0,1], next: 'Mon' },
+  { id: 'DB', name: 'D. Brennan',   log: [1,0,0,0,0,0,0], next: 'Fri', risk: true },
+  { id: 'JO', name: 'J. Okafor',    log: [1,1,0,0,0,0,0], next: 'Mon', risk: true },
+  { id: 'KN', name: 'K. Nakamura',  log: [1,1,1,0,1,1,1], next: 'Thu' },
+  { id: 'MH', name: 'M. Herrera',   log: [1,1,1,1,1,1,1], next: 'Fri', msg: 3, msgText: 'wrote in about knee soreness' },
+  { id: 'PS', name: 'P. Shah',      log: [1,1,1,1,0,0,0], next: 'Tue', risk: true },
+  { id: 'RP', name: 'R. Padilla',   log: [1,1,1,1,1,1,1], next: 'Wed', finish: 4 },
+  { id: 'TW', name: 'T. Walsh',     log: [1,1,0,1,1,1,0], next: 'Thu' },
+];
+const SIM = { day: 0, mode: 'with', reached: {}, playing: null };
+const rowsEl = document.getElementById('rows');
+const ROW_H = () => (innerWidth < 768 ? 68 : 64) + 6;
+
+function logged(p, d){ const r = SIM.reached[p.id]; if (r !== undefined && d > r) return 1; return p.log[d]; }
+function cancelDay(p){ if (!p.risk) return -1; let s = 0; for (let i = 0; i < 7; i++) { s = p.log[i] ? 0 : s + 1; if (s >= 4) return i; } return -1; }
+function quietStreak(p, d){ let s = 0; for (let i = d; i >= 0 && !logged(p, i); i--) s++; return s; }
+function state(p, d){
+  const q = quietStreak(p, d), r = SIM.reached[p.id];
+  const msgToday = p.msg !== undefined && d >= p.msg && !(r !== undefined && r >= p.msg);
+  if (SIM.mode === 'without') {
+    const cd = cancelDay(p), cancelled = cd >= 0 && d >= cd;
+    return { score: 0, cancelled, sub: cancelled ? `cancelled on ${DAYS[cd]}` : 'next visit ' + p.next, dot: null };
+  }
+  if (r !== undefined) return { score: 5, sub: d > r ? 'back on plan after a check-in' : 'check-in sent today', dot: 'sage', chip: ['Reached', 'sage'] };
+  if (msgToday) return { score: 100, flag: true, act: true, sub: p.msgText, chip: [d === p.msg ? 'Today' : DAYS[p.msg], 'terra'] };
+  if (q >= 3) return { score: 50 + q, flag: true, act: true, sub: q >= 5 ? 'quiet all week' : `${q} quiet days`, dot: 'terra' };
+  if (q === 2) return { score: 30, sub: 'a couple of quiet days', dot: 'hollow' };
+  if (p.finish !== undefined && d >= p.finish) return { score: 1, sub: 'finished this week’s plan', dot: 'sage' };
+  if (q === 1) return { score: 10, sub: 'no log yesterday', dot: 'sage' };
+  return { score: 2, sub: d === 0 ? 'logged today' : (d > 3 ? 'moving right along' : 'keeping pace'), dot: 'sage' };
+}
+
+// build rows once, then move them (FLIP-style via transform)
+PATIENTS.forEach(p => {
+  const el = document.createElement('div'); el.className = 'prow'; el.dataset.id = p.id;
+  el.innerHTML = `<span class="av">${p.id}</span><span class="meta"><span class="row-title">${p.name}</span><span class="row-sub"></span></span><span class="right"></span>`;
+  rowsEl.appendChild(el); p.el = el;
+});
+rowsEl.addEventListener('click', e => {
+  const b = e.target.closest('.reach'); if (!b) return;
+  const id = b.closest('.prow').dataset.id; SIM.reached[id] = SIM.day; render(); logEvent();
+});
+
+function render(){
+  const d = SIM.day, h = ROW_H();
+  const list = PATIENTS.map(p => ({ p, s: state(p, d) }));
+  if (SIM.mode === 'with') list.sort((a, b) => b.s.score - a.s.score || a.p.name.localeCompare(b.p.name));
+  else list.sort((a, b) => a.p.name.localeCompare(b.p.name));
+  list.forEach(({ p, s }, i) => {
+    const el = p.el; el.style.transform = `translateY(${i * h}px)`;
+    el.classList.toggle('flag', !!s.flag); el.classList.toggle('cancel', !!s.cancelled);
+    el.querySelector('.row-sub').textContent = s.sub;
+    let right = '';
+    if (s.chip) right += `<span class="chip ${s.chip[1]}">${s.chip[0]}</span>`;
+    if (s.act) right += `<button class="reach" type="button">Reach out</button>`;
+    else if (s.dot) right += `<span class="dot ${s.dot}"></span>`;
+    if (s.cancelled) right = `<span class="chip grey">Cancelled</span>`;
+    el.querySelector('.right').innerHTML = right;
+  });
+  rowsEl.style.height = (PATIENTS.length * h - 6) + 'px';
+
+  // week scrubber
+  const pct = (d + 1) / 8 * 100;
+  document.getElementById('week-fill').style.width = pct + '%';
+  document.getElementById('week-cursor').style.left = pct + '%';
+  document.querySelectorAll('.week-day').forEach((w, i) => w.classList.toggle('past', i <= d));
+  document.querySelectorAll('#week-labels span[data-d]').forEach(s => s.classList.toggle('on', +s.dataset.d === d));
+  document.getElementById('day').value = d + 1;
+  document.getElementById('day-caption').textContent = `${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][d]} · ${PATIENTS.length} patients`;
+  stats();
+}
+
+function counts(){
+  const d = SIM.day, reached = Object.keys(SIM.reached).length;
+  const surfaced = PATIENTS.filter(p => (p.msg !== undefined && d >= p.msg) || [...Array(d + 1).keys()].some(i => quietStreak(p, i) >= 3)).length;
+  const waiting = PATIENTS.filter(p => SIM.mode === 'with' && state(p, d).act).length;
+  const cancelled = PATIENTS.filter(p => { const cd = cancelDay(p); return cd >= 0 && d >= cd; }).length;
+  return { surfaced, reached, waiting, cancelled };
+}
+
+function stats(){
+  const c = counts(), A = document.getElementById('stat-a'), B = document.getElementById('stat-b');
+  const an = document.getElementById('stat-a-n'), al = document.getElementById('stat-a-l'), bn = document.getElementById('stat-b-n'), bl = document.getElementById('stat-b-l');
+  const bridge = document.getElementById('bridge');
+  const perPatient = CALC.visits / 2 * CALC.rate;
+  if (SIM.mode === 'with') {
+    A.classList.remove('alert'); an.textContent = c.surfaced; al.textContent = 'patients surfaced before they cancelled';
+    B.classList.remove('alert'); bn.textContent = c.reached; bl.textContent = 'reached out to, back on plan';
+    if (c.waiting) bridge.innerHTML = `<b>${c.waiting} ${c.waiting > 1 ? 'patients need' : 'patient needs'} a hand.</b> Press <b>Reach out</b> on the highlighted ${c.waiting > 1 ? 'rows' : 'row'}.`;
+    else if (c.reached) bridge.innerHTML = `Each patient you keep on plan is worth about <b>${money(perPatient)}</b> in visits at your numbers below. That’s <b>${money(perPatient * c.reached)}</b> this week, from ${c.reached} ${c.reached > 1 ? 'check-ins' : 'check-in'}.`;
+    else bridge.innerHTML = SIM.day === 0 ? 'Press play, or drag across the week. When a patient goes quiet, press <b>Reach out</b>.' : 'Everyone is keeping pace so far. Keep moving through the week.';
+  } else {
+    A.classList.add('alert'); an.textContent = c.cancelled; al.textContent = 'cancellations you hear about first';
+    B.classList.remove('alert'); bn.textContent = 0; bl.textContent = 'signals between visits';
+    bridge.innerHTML = c.cancelled
+      ? `Without a signal between visits, the first sign is a cancelled appointment. At your numbers that could be <b>${money(perPatient * c.cancelled)}</b> in visits gone this week.`
+      : 'Same caseload, same week. Without Revora there’s nothing to see until someone cancels. Drag towards Friday.';
+  }
+  document.getElementById('lift-hint').textContent = c.surfaced || 'several';
+}
+
+const logEl = document.getElementById('log');
+function logEvent(){
+  const items = [];
+  for (let d = 0; d <= SIM.day; d++) {
+    PATIENTS.forEach(p => {
+      if (SIM.mode === 'without') { if (cancelDay(p) === d) items.push([d, `<b>${p.name}</b> cancelled their next visit`, 't']); return; }
+      if (p.msg === d) items.push([d, `<b>${p.name}</b> ${p.msgText}. Clara flagged it`, 't']);
+      if (p.risk) { let s = 0; for (let j = d; j >= 0 && !logged(p, j); j--) s++; if (s === 3) items.push([d, `<b>${p.name}</b> went quiet for 3 days`, 't']); }
+      if (SIM.reached[p.id] === d) items.push([d, `You checked in with <b>${p.name}</b>`, '']);
+      if (SIM.reached[p.id] !== undefined && SIM.reached[p.id] === d - 1) items.push([d, `<b>${p.name}</b> logged again`, '']);
+      if (p.finish === d) items.push([d, `<b>${p.name}</b> finished this week’s plan`, '']);
+    });
+  }
+  logEl.innerHTML = items.length ? items.reverse().map(([d, t, c]) => `<li class="${c}"><i></i><span><span class="sage-ink">${DAYS[d]}</span> · ${t}</span></li>`).join('')
+    : `<li class="empty">${SIM.mode === 'with' ? 'Nothing needs you yet. Quiet days will show up here.' : 'Nothing. No signal reaches the clinic between visits.'}</li>`;
+}
+
+// week labels + day knobs (visit at each end, seven days in between)
+(() => {
+  const track = document.getElementById('week-track'), labels = document.getElementById('week-labels');
+  let lh = '<span class="vl" style="left:0;transform:none">Visit</span><span class="vl" style="left:100%;transform:translateX(-100%)">Visit</span>';
+  DAYS.forEach((dname, i) => {
+    const pct = (i + 1) / 8 * 100;
+    const k = document.createElement('span'); k.className = 'week-day'; k.style.left = pct + '%'; track.insertBefore(k, document.getElementById('week-cursor'));
+    lh += `<span data-d="${i}" style="left:${pct}%">${dname}</span>`;
+  });
+  labels.innerHTML = lh;
+})();
+
+document.getElementById('day').addEventListener('input', e => { stop(); SIM.day = +e.target.value - 1; render(); logEvent(); });
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.seg button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); });
+  SIM.mode = b.dataset.mode; render(); logEvent();
+}));
+const playBtn = document.getElementById('play');
+function stop(){ clearInterval(SIM.playing); SIM.playing = null; document.getElementById('play-t').textContent = 'Play the week'; document.getElementById('play-ic').innerHTML = '<path d="M2.5 1.5v9l8-4.5z"/>'; }
+playBtn.addEventListener('click', () => {
+  if (SIM.playing) return stop();
+  if (SIM.day >= 6) { SIM.day = 0; SIM.reached = {}; render(); logEvent(); }
+  document.getElementById('play-t').textContent = 'Pause'; document.getElementById('play-ic').innerHTML = '<path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/>';
+  SIM.playing = setInterval(() => {
+    // pause automatically when someone needs a hand, so the viewer acts
+    if (SIM.day >= 6) return stop();
+    SIM.day++; render(); logEvent();
+    if ((SIM.mode === 'with' && counts().waiting) || SIM.day >= 6) stop();
+  }, 1100);
+});
+addEventListener('resize', render);
+
+/* ================= FEATURE 2: drop-off & RTM calculator ================= */
+const CALC = { pts: 120, visits: 12, rate: 105, done: 30, lift: 10, rtm: 50, rtmrate: 90 };
+function money(n){ n = Math.round(n); if (n >= 1e6) return '$' + (n / 1e6).toFixed(n >= 1e7 ? 1 : 2).replace(/\.0+$/, '') + 'M'; if (n >= 1e4) return '$' + Math.round(n / 1000) + 'k'; return '$' + n.toLocaleString('en-US'); }
+function full(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+const fmt = { pts: v => v, visits: v => v, rate: v => '$' + v, done: v => v + '%', lift: v => '+' + v + ' pts', rtm: v => v + '%', rtmrate: v => '$' + v };
+const tweens = {};
+function tween(id, to, f = full){
+  const el = document.getElementById(id), from = tweens[id] ?? 0; tweens[id] = to;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = f(to); return; }
+  const t0 = performance.now(), dur = 600;
+  (function frame(t){ const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = f(from + (to - from) * e); if (k < 1 && tweens[id] === to) requestAnimationFrame(frame); })(t0);
+}
+function calc(){
+  const yr = CALC.pts * 12, half = CALC.visits / 2;
+  const dropouts = yr * (1 - CALC.done / 100);
+  const lost = dropouts * half * CALC.rate;
+  const liftPts = Math.min(CALC.lift, 100 - CALC.done);
+  const extra = yr * liftPts / 100;
+  const kept = extra * half * CALC.rate;
+  const months = CALC.visits / 2 / 4.33;
+  const rtm = yr * CALC.rtm / 100 * months * CALC.rtmrate;
+  const total = kept + rtm;
+  tween('r-lost', lost); tween('r-kept', kept); tween('r-rtm', rtm); tween('r-total', total);
+  document.getElementById('r-lost-sub').textContent = `in visits that never happen, from about ${Math.round(dropouts).toLocaleString('en-US')} patients a year who stop before finishing.`;
+  document.getElementById('r-kept-sub').textContent = `${Math.round(extra).toLocaleString('en-US')} more patients a year finish their plan`;
+  document.getElementById('r-rtm-sub').textContent = `${Math.round(yr * CALC.rtm / 100).toLocaleString('en-US')} patients × ${months.toFixed(1)} months in care`;
+  const base = Math.max(lost + rtm, 1);
+  document.getElementById('bar-kept').style.width = (kept / base * 100) + '%';
+  document.getElementById('bar-rtm').style.width = (rtm / base * 100) + '%';
+  CALC._summary = { lost, kept, rtm, total, pts: CALC.pts, done: CALC.done };
+}
+Object.keys(CALC).forEach(k => {
+  const input = document.getElementById('in-' + k), out = document.getElementById('o-' + k);
+  const sync = () => { CALC[k] = +input.value; out.textContent = fmt[k](CALC[k]); input.style.setProperty('--p', ((input.value - input.min) / (input.max - input.min) * 100) + '%'); };
+  sync(); input.addEventListener('input', () => { sync(); calc(); stats(); });
+});
+calc();
+
+/* ---------- Demo modal (numbers carried over) ---------- */
+const modal = document.getElementById('modal');
+function openModal(e){
+  e && e.preventDefault(); calc();
+  const s = CALC._summary, c = counts();
+  document.getElementById('sum').innerHTML =
+    `<div><b>${s.pts}</b>new patients a month</div><div><b>${s.done}%</b>finish their plan today</div>` +
+    `<div><b>${money(s.lost)}</b>left on the table a year</div><div><b>${money(s.total)}</b>Revora could return</div>`;
+  document.getElementById('modal-form').style.display = ''; document.getElementById('sent').style.display = 'none';
+  modal.classList.add('open'); document.body.style.overflow = 'hidden';
+  setTimeout(() => modal.querySelector('input').focus(), 50);
+}
+function closeModal(){ modal.classList.remove('open'); document.body.style.overflow = ''; }
+document.querySelectorAll('[data-demo]').forEach(a => a.addEventListener('click', openModal));
+document.getElementById('modal-x').addEventListener('click', closeModal);
+document.getElementById('sent-close').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.getElementById('demo-form').addEventListener('submit', e => { e.preventDefault(); document.getElementById('modal-form').style.display = 'none'; document.getElementById('sent').style.display = 'block'; e.target.reset(); });
+
+render(); logEvent();
+</script>
+</body>
+</html>
