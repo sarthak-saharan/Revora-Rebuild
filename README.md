@@ -7,7 +7,7 @@
 
 ## What I Built
 
-I rebuilt Revora's homepage in its own design system and added a section for the person who actually signs the contract: the clinic owner. It has two parts. First, a one week caseload simulator where you watch eight patients between visits, see who goes quiet, and press Reach out before they cancel. Flip to "Without Revora" and the same week plays out with no signal until the cancellations land. Second, a calculator that turns your clinic's numbers into what dropoff costs a year and what Revora could return through kept visits and RTM billing. Every Book a demo button then opens a time picker with those numbers attached to the booking. I picked this because Revora's pitch is about money and retention, and the page never puts a number on either.
+I rebuilt Revora's homepage in its own design system and added a section for the person who actually signs the contract: the clinic owner. It has two parts. First, a one week caseload simulator where you watch six patients between visits, see who goes quiet, and press Reach out before they cancel. Flip to "Without Revora" and the same week plays out with no signal until the cancellations land. Second, a calculator where the owner sets four numbers they already know (patient volume, plan length, revenue per visit, completion rate) and Revora's own assumptions sit in a separate, prefilled panel. It turns those numbers into what dropoff costs a year and what Revora could return through kept visits and RTM billing. Every Book a demo button then opens a time picker with those numbers attached to the booking. I picked this because Revora's pitch is about money and retention, and the page never puts a number on either.
 
 ## The Problem I Spotted
 

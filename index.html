@@ -268,8 +268,33 @@ em{font-style:italic}
 /* calculator */
 .calc{margin-top:2.5rem;display:grid;gap:1.5rem;align-items:start}
 @media (min-width:1024px){.calc{grid-template-columns:1fr 1.05fr}}
+.calc-left{display:flex;flex-direction:column;gap:1rem}
+.group-head{padding-bottom:1rem;border-bottom:1px solid var(--sand)}
+.group-tag{display:inline-flex;align-items:center;gap:.4rem;border-radius:9999px;padding:.25rem .65rem;font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.group-tag::before{content:"";width:.4rem;height:.4rem;border-radius:50%;background:currentColor}
+.group-tag.you{background:var(--teal);color:var(--cream)}
+.group-tag.revora{background:#fff;color:var(--sage-ink)}
+.group-title{display:block;margin-top:.6rem;font-size:var(--text-h3);line-height:1.3}
+.group-copy{display:block;margin-top:.2rem;font-size:.85rem;line-height:1.5;color:var(--sage-ink)}
+.assumptions{border-radius:1.5rem;background:var(--sand-60);border:1px dashed rgba(14,75,68,.22)}
+.assumptions summary{list-style:none;cursor:pointer;display:block;padding:1.25rem}
+@media (min-width:640px){.assumptions summary{padding:1.5rem 1.75rem}}
+.assumptions summary::-webkit-details-marker{display:none}
+.assume-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.9rem}
+.assume-chips span{border-radius:9999px;background:rgba(255,255,255,.75);padding:.3rem .7rem;font-size:.8rem;color:var(--teal)}
+.assume-chips b{font-family:var(--font-display);font-weight:500;font-size:.95rem;margin-right:.2rem}
+.assume-toggle{display:inline-flex;align-items:center;gap:.4rem;margin-top:1rem;min-height:44px;font-size:var(--text-small);font-weight:500;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--teal-35)}
+.assume-toggle svg{transition:transform var(--dur-base) var(--ease-entrance)}
+.assumptions[open] .assume-toggle svg{transform:rotate(180deg)}
+.assume-toggle .t-close,.assumptions[open] .assume-toggle .t-open{display:none}
+.assumptions[open] .assume-toggle .t-close{display:inline}
+.assumptions[open] .assume-chips{display:none}
+.assume-body{padding:0 1.25rem 1.25rem}
+@media (min-width:640px){.assume-body{padding:0 1.75rem 1.5rem}}
+.assume-body .field{border-color:rgba(14,75,68,.12)}
+.assume-body .field:first-child{padding-top:1.1rem;border-top:1px solid rgba(14,75,68,.12)}
 .field{padding:1.1rem 0;border-bottom:1px solid var(--sand)}
-.field:first-child{padding-top:0}
+.group-head + .field{padding-top:1.1rem}
 .field:last-child{border-bottom:0;padding-bottom:0}
 .field-top{display:flex;align-items:baseline;justify-content:space-between;gap:1rem}
 .field-top label{font-size:var(--text-small);font-weight:500}
@@ -644,7 +669,7 @@ footer{padding:0 .5rem .5rem}
       <div class="reveal">
         <span class="concept-tag"><i></i>For clinic owners</span>
         <h2 id="numbers-heading" class="display">What quiet days cost, and what <em>they could return</em></h2>
-        <p class="lead intro-lead">Play one week between visits for a sample caseload. Then put in your clinic’s numbers and see what catching patients early could be worth over a year.</p>
+        <p class="lead intro-lead">Play one week between visits for a sample caseload of six patients. Then put in your clinic’s numbers and see what catching patients early could be worth over a year.</p>
       </div>
 
       <!-- Step 1: triage simulator -->
@@ -665,7 +690,7 @@ footer{padding:0 .5rem .5rem}
           <div class="caseload">
             <div class="caseload-top">
               <p class="display">Cedarline Physical Therapy</p>
-              <p class="sage-ink" style="font-size:.8rem;white-space:nowrap" id="day-caption">Monday · 8 patients</p>
+              <p class="sage-ink" style="font-size:.8rem;white-space:nowrap" id="day-caption">Monday · 6 patients</p>
             </div>
             <div class="rows" id="rows" aria-live="polite"></div>
           </div>
@@ -701,41 +726,60 @@ footer{padding:0 .5rem .5rem}
       <!-- Step 2: calculator -->
       <div class="step-label reveal" style="margin-top:6rem"><b>2</b><span class="eyebrow">Your clinic, in numbers</span></div>
       <h3 class="display step-title reveal">Now scale it to a year at your clinic.</h3>
-      <p class="step-copy reveal">Move the sliders to match your clinic. Every figure updates as you go, and the assumptions are listed below the result.</p>
+      <p class="step-copy reveal">Set four numbers from your clinic. Revora’s side of the math is prefilled and kept separate, so you can see exactly what’s yours and what’s an assumption.</p>
 
       <div class="calc reveal beat-1">
-        <div class="panel" id="inputs">
-          <div class="field">
-            <div class="field-top"><label for="in-pts">New patients a month</label><output id="o-pts"></output></div>
-            <input class="range" type="range" id="in-pts" min="20" max="600" step="10" value="120" />
+        <div class="calc-left">
+          <div class="panel" id="inputs">
+            <div class="group-head">
+              <span class="group-tag you">You set these</span>
+              <p class="display group-title">Your clinic</p>
+              <p class="group-copy">Four numbers you already know. Drag each one to match your clinic.</p>
+            </div>
+            <div class="field">
+              <div class="field-top"><label for="in-pts">New patients a month</label><output id="o-pts"></output></div>
+              <input class="range" type="range" id="in-pts" min="20" max="600" step="10" value="120" />
+            </div>
+            <div class="field">
+              <div class="field-top"><label for="in-visits">Visits in a typical plan of care</label><output id="o-visits"></output></div>
+              <input class="range" type="range" id="in-visits" min="4" max="24" step="1" value="12" />
+            </div>
+            <div class="field">
+              <div class="field-top"><label for="in-rate">Average revenue per visit</label><output id="o-rate"></output></div>
+              <input class="range" type="range" id="in-rate" min="60" max="200" step="5" value="105" />
+            </div>
+            <div class="field">
+              <div class="field-top"><label for="in-done">Patients who finish their plan today</label><output id="o-done"></output></div>
+              <p class="hint">Not sure? Leave it at 30%, the WebPT benchmark for outpatient PT.</p>
+              <input class="range" type="range" id="in-done" min="10" max="80" step="1" value="30" />
+            </div>
           </div>
-          <div class="field">
-            <div class="field-top"><label for="in-visits">Visits in a typical plan of care</label><output id="o-visits"></output></div>
-            <input class="range" type="range" id="in-visits" min="4" max="24" step="1" value="12" />
-          </div>
-          <div class="field">
-            <div class="field-top"><label for="in-rate">Average revenue per visit</label><output id="o-rate"></output></div>
-            <input class="range" type="range" id="in-rate" min="60" max="200" step="5" value="105" />
-          </div>
-          <div class="field">
-            <div class="field-top"><label for="in-done">Patients who finish their plan today</label><output id="o-done"></output></div>
-            <p class="hint">WebPT puts this near 30% across outpatient PT.</p>
-            <input class="range" type="range" id="in-done" min="10" max="80" step="1" value="30" />
-          </div>
-          <div class="field">
-            <div class="field-top"><label for="in-lift">More patients who finish with Revora</label><output id="o-lift"></output></div>
-            <p class="hint">Percentage points. The simulation above caught <span id="lift-hint">some</span> quiet patients in one week.</p>
-            <input class="range" type="range" id="in-lift" min="0" max="30" step="1" value="10" />
-          </div>
-          <div class="field">
-            <div class="field-top"><label for="in-rtm">Patients enrolled in RTM</label><output id="o-rtm"></output></div>
-            <input class="range" type="range" id="in-rtm" min="0" max="100" step="5" value="50" />
-          </div>
-          <div class="field">
-            <div class="field-top"><label for="in-rtmrate">RTM revenue per enrolled patient, per month</label><output id="o-rtmrate"></output></div>
-            <p class="hint">Illustrative blended rate. Real reimbursement depends on codes, payers and documentation.</p>
-            <input class="range" type="range" id="in-rtmrate" min="40" max="160" step="5" value="90" />
-          </div>
+
+          <details class="assumptions" id="assumptions">
+            <summary>
+              <span class="group-tag revora">Set by Revora</span>
+              <span class="display group-title">Revora’s assumptions</span>
+              <span class="group-copy">You don’t need to change these. They’re conservative defaults that Revora would confirm with you on a demo.</span>
+              <span class="assume-chips" id="assume-chips"></span>
+              <span class="assume-toggle"><span class="t-open">Adjust assumptions</span><span class="t-close">Hide assumptions</span><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </summary>
+            <div class="assume-body">
+              <div class="field">
+                <div class="field-top"><label for="in-lift">More patients who finish with Revora</label><output id="o-lift"></output></div>
+                <p class="hint">Percentage points. The simulation above caught <span id="lift-hint">some</span> quiet patients in one week.</p>
+                <input class="range" type="range" id="in-lift" min="0" max="30" step="1" value="10" />
+              </div>
+              <div class="field">
+                <div class="field-top"><label for="in-rtm">Patients enrolled in RTM</label><output id="o-rtm"></output></div>
+                <input class="range" type="range" id="in-rtm" min="0" max="100" step="5" value="50" />
+              </div>
+              <div class="field">
+                <div class="field-top"><label for="in-rtmrate">RTM revenue per enrolled patient, per month</label><output id="o-rtmrate"></output></div>
+                <p class="hint">Illustrative blended rate. Real reimbursement depends on codes, payers and documentation.</p>
+                <input class="range" type="range" id="in-rtmrate" min="40" max="160" step="5" value="90" />
+              </div>
+            </div>
+          </details>
         </div>
 
         <div class="result" aria-live="polite">
@@ -933,11 +977,9 @@ const PATIENTS = [
   { id: 'AL', name: 'A. Lindqvist', log: [1,1,1,1,1,0,1], next: 'Mon' },
   { id: 'DB', name: 'D. Brennan',   log: [1,0,0,0,0,0,0], next: 'Fri', risk: true },
   { id: 'JO', name: 'J. Okafor',    log: [1,1,0,0,0,0,0], next: 'Mon', risk: true },
-  { id: 'KN', name: 'K. Nakamura',  log: [1,1,1,0,1,1,1], next: 'Thu' },
   { id: 'MH', name: 'M. Herrera',   log: [1,1,1,1,1,1,1], next: 'Fri', msg: 3, msgText: 'wrote in about knee soreness' },
   { id: 'PS', name: 'P. Shah',      log: [1,1,1,1,0,0,0], next: 'Tue', risk: true },
   { id: 'RP', name: 'R. Padilla',   log: [1,1,1,1,1,1,1], next: 'Wed', finish: 4 },
-  { id: 'TW', name: 'T. Walsh',     log: [1,1,0,1,1,1,0], next: 'Thu' },
 ];
 const SIM = { day: 0, mode: 'with', reached: {}, playing: null };
 const rowsEl = document.getElementById('rows');
@@ -955,7 +997,7 @@ function state(p, d){
   }
   if (r !== undefined) return { score: 5, sub: d > r ? 'back on plan after a check-in' : 'check-in sent today', dot: 'sage', chip: ['Reached', 'sage'] };
   if (msgToday) return { score: 100, flag: true, act: true, sub: p.msgText, chip: [d === p.msg ? 'Today' : DAYS[p.msg], 'terra'] };
-  if (q >= 3) return { score: 50 + q, flag: true, act: true, sub: q >= 5 ? 'quiet all week' : `${q} quiet days`, dot: 'terra' };
+  if (q >= 3) return { score: 50 + q, flag: true, act: true, sub: q >= 7 ? 'quiet all week' : `${q} quiet days`, dot: 'terra' };
   if (q === 2) return { score: 30, sub: 'a couple of quiet days', dot: 'hollow' };
   if (p.finish !== undefined && d >= p.finish) return { score: 1, sub: 'finished this week’s plan', dot: 'sage' };
   if (q === 1) return { score: 10, sub: 'no log yesterday', dot: 'sage' };
@@ -1110,6 +1152,8 @@ function calc(){
   document.getElementById('bar-kept').style.width = (kept / base * 100) + '%';
   document.getElementById('bar-rtm').style.width = (rtm / base * 100) + '%';
   CALC._summary = { lost, kept, rtm, total, pts: CALC.pts, done: CALC.done };
+  document.getElementById('assume-chips').innerHTML =
+    `<span><b>+${CALC.lift} pts</b>finish their plan</span><span><b>${CALC.rtm}%</b>enrolled in RTM</span><span><b>$${CALC.rtmrate}</b>RTM per patient a month</span>`;
 }
 Object.keys(CALC).forEach(k => {
   const input = document.getElementById('in-' + k), out = document.getElementById('o-' + k);
