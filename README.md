@@ -17,9 +17,9 @@ The page is beautiful and the story is clear for patients. The buyer is a clinic
 
 | Dimension | Before (Original Site) | After (This Prototype) |
 |---|---|---|
-| Proof of value | "RTM revenue, captured" as a headline with no amount attached | A calculator that shows yearly dollars lost to dropoff, visits kept, and RTM captured, using the visitor's own clinic numbers |
 | Product understanding | Provider view shown as a still image of four stacked cards | A playable week where the caseload reorders live and flagged patients rise to the top with a Reach out action |
 | The case against doing nothing | Dropoff stat stated once, in the abstract | A "Without Revora" toggle that replays the same week and ends in two cancelled visits the clinic never saw coming |
+| Proof of value | "RTM revenue, captured" as a headline with no amount attached | A calculator that shows yearly dollars lost to dropoff, visits kept, and RTM captured, using the visitor's own clinic numbers |
 | Demo request | Book a demo leads to a bare calendar with no context about the clinic | The time picker sits next to the visitor's own numbers (clinic size, completion rate, estimated return), and the booking carries them, so sales opens the call already knowing them |
 
 ## Target Metrics
