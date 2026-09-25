@@ -320,10 +320,20 @@ details.assume ul{margin-top:.75rem;padding-left:1rem;display:flex;flex-directio
 .sum{margin-top:1.25rem;border-radius:1.25rem;background:var(--sand-60);padding:1rem 1.1rem;display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
 .sum div{font-size:.78rem;color:var(--sage-ink)}
 .sum b{display:block;font-family:var(--font-display);font-weight:500;font-size:1.3rem;color:var(--teal)}
-.form{margin-top:1.25rem;display:flex;flex-direction:column;gap:.75rem}
-.form label{font-size:.82rem;font-weight:500}
-.form input{margin-top:.3rem;width:100%;border-radius:.9rem;background:#fff;border:1px solid var(--sand);padding:.8rem 1rem;font-size:1rem;outline:none;transition:border-color .15s}
-.form input:focus{border-color:var(--teal)}
+.sched{margin-top:1.25rem}
+.sched-label{font-size:.82rem;font-weight:500}
+.days{margin-top:.5rem;display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.25rem}
+.days button{flex:1 1 0;min-width:0;border-radius:1rem;background:#fff;border:1px solid var(--sand);padding:.5rem .25rem;text-align:center;line-height:1.2;transition:all .15s}
+.days button small{display:block;font-size:.7rem;color:var(--sage-ink)}
+.days button b{display:block;font-family:var(--font-display);font-weight:500;font-size:1.15rem}
+.days button.on{background:var(--teal);border-color:var(--teal);color:var(--cream)}
+.days button.on small{color:rgba(250,247,242,.75)}
+.slots{margin-top:1rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+.slots button{min-height:44px;border-radius:9999px;background:#fff;border:1px solid var(--sand);font-size:.85rem;font-weight:500;transition:all .15s}
+.slots button:hover{border-color:var(--teal)}
+.slots button.on{background:var(--teal);border-color:var(--teal);color:var(--cream)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.sched-note{margin-top:.75rem;font-size:.75rem;line-height:1.5;color:var(--sage-ink);text-align:center}
 .modal-x{float:right;display:flex;width:2.5rem;height:2.5rem;align-items:center;justify-content:center;border-radius:50%;background:var(--sand-60);margin:-.25rem -.25rem 0 .5rem}
 .sent{display:none;text-align:center;padding:1rem 0}
 .sent .clara-dot{margin:0 auto;width:3rem;height:3rem;font-size:1.3rem}
@@ -841,20 +851,20 @@ footer{padding:0 .5rem .5rem}
     <button class="modal-x" type="button" id="modal-x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="transform:rotate(45deg)"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     <div id="modal-form">
       <p class="eyebrow sage-ink">Book a demo</p>
-      <h3 class="display" id="modal-title" style="margin-top:.5rem">We’ll walk through Revora with your numbers</h3>
+      <h3 class="display" id="modal-title" style="margin-top:.5rem">Pick a time. Your numbers come with you.</h3>
       <div class="sum" id="sum"></div>
-      <form class="form" id="demo-form">
-        <label>Your name<input required placeholder="Dr. Jordan Lee" autocomplete="off" /></label>
-        <label>Clinic<input required placeholder="Cedarline Physical Therapy" autocomplete="off" /></label>
-        <label>Work email<input required type="email" placeholder="jordan@cedarlinept.com" autocomplete="off" /></label>
-        <button class="btn btn-teal" type="submit" style="margin-top:.5rem;width:100%;min-height:48px">Request a demo</button>
-        <p class="sage-ink" style="font-size:.75rem;text-align:center">Prototype form. Nothing is sent anywhere.</p>
-      </form>
+      <div class="sched">
+        <p class="sched-label">30 minute walkthrough · times in your timezone</p>
+        <div class="days" id="days" role="listbox" aria-label="Day"></div>
+        <div class="slots" id="slots" role="listbox" aria-label="Time"></div>
+        <button class="btn btn-teal" type="button" id="book" disabled style="margin-top:1rem;width:100%;min-height:48px">Choose a time</button>
+        <p class="sched-note">Revora books demos through Google Calendar, which asks for your name and email when you confirm a time. This prototype stops before that step, so nothing gets booked.</p>
+      </div>
     </div>
     <div class="sent" id="sent">
       <span class="clara-dot">C</span>
-      <h3 class="display" style="margin-top:1rem">Thanks, you’re on the list</h3>
-      <p class="muted small" style="margin-top:.5rem">In the real product, your team would get a walkthrough built around these numbers. This is a demo, so nothing was sent.</p>
+      <h3 class="display" style="margin-top:1rem" id="sent-title">See you then</h3>
+      <p class="muted small" style="margin-top:.5rem">In the real flow, Google Calendar would ask for your name and email here, and the booking would carry your clinic’s numbers so the walkthrough starts from them. This is a demo, so nothing was booked.</p>
       <button class="btn btn-teal" type="button" id="sent-close" style="margin-top:1.25rem">Back to the page</button>
     </div>
   </div>
@@ -1118,7 +1128,8 @@ function openModal(e){
     `<div><b>${money(s.lost)}</b>left on the table a year</div><div><b>${money(s.total)}</b>Revora could return</div>`;
   document.getElementById('modal-form').style.display = ''; document.getElementById('sent').style.display = 'none';
   modal.classList.add('open'); document.body.style.overflow = 'hidden';
-  setTimeout(() => modal.querySelector('input').focus(), 50);
+  buildScheduler();
+  setTimeout(() => modal.querySelector('.days button').focus(), 50);
 }
 function closeModal(){ modal.classList.remove('open'); document.body.style.overflow = ''; }
 document.querySelectorAll('[data-demo]').forEach(a => a.addEventListener('click', openModal));
@@ -1126,7 +1137,37 @@ document.getElementById('modal-x').addEventListener('click', closeModal);
 document.getElementById('sent-close').addEventListener('click', closeModal);
 modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-document.getElementById('demo-form').addEventListener('submit', e => { e.preventDefault(); document.getElementById('modal-form').style.display = 'none'; document.getElementById('sent').style.display = 'block'; e.target.reset(); });
+// mock scheduler: next five weekdays, a handful of slots each
+const SLOT = { day: null, time: null };
+const TIMES = ['9:00 AM', '10:30 AM', '11:30 AM', '1:00 PM', '2:30 PM', '4:00 PM'];
+function buildScheduler(){
+  const days = [], d = new Date(); d.setHours(0, 0, 0, 0);
+  while (days.length < 5) { d.setDate(d.getDate() + 1); if (d.getDay() % 6) days.push(new Date(d)); }
+  SLOT.day = null; SLOT.time = null;
+  document.getElementById('days').innerHTML = days.map((x, i) => `<button type="button" role="option" data-i="${i}" data-label="${x.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}"><small>${x.toLocaleDateString('en-US', { weekday: 'short' })}</small><b>${x.getDate()}</b></button>`).join('');
+  pickDay(document.querySelector('#days button'));
+}
+function pickDay(btn){
+  document.querySelectorAll('#days button').forEach(b => { b.classList.toggle('on', b === btn); b.setAttribute('aria-selected', b === btn); });
+  SLOT.day = btn.dataset.label; SLOT.time = null;
+  const i = +btn.dataset.i, open = TIMES.filter((_, k) => (k + i) % 3 !== 0 || k === 1);
+  document.getElementById('slots').innerHTML = open.map(t => `<button type="button" role="option">${t}</button>`).join('');
+  updateBook();
+}
+function updateBook(){
+  const b = document.getElementById('book');
+  b.disabled = !SLOT.time; b.textContent = SLOT.time ? `Book ${SLOT.day} at ${SLOT.time}` : 'Choose a time';
+}
+document.getElementById('days').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pickDay(b); });
+document.getElementById('slots').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#slots button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); });
+  SLOT.time = b.textContent; updateBook();
+});
+document.getElementById('book').addEventListener('click', () => {
+  document.getElementById('sent-title').textContent = `See you ${SLOT.day} at ${SLOT.time}`;
+  document.getElementById('modal-form').style.display = 'none'; document.getElementById('sent').style.display = 'block';
+});
 
 render(); logEvent();
 </script>
