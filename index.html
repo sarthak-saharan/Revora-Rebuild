@@ -669,7 +669,7 @@ footer{padding:0 .5rem .5rem}
       <div class="reveal">
         <span class="concept-tag"><i></i>For clinic owners</span>
         <h2 id="numbers-heading" class="display">What quiet days cost, and what <em>they could return</em></h2>
-        <p class="lead intro-lead">Play one week between visits for a sample caseload of six patients. Then put in your clinic’s numbers and see what catching patients early could be worth over a year.</p>
+        <p class="lead intro-lead">Play one week between visits for a sample caseload of four patients. Then put in your clinic’s numbers and see what catching patients early could be worth over a year.</p>
       </div>
 
       <!-- Step 1: triage simulator -->
@@ -690,7 +690,7 @@ footer{padding:0 .5rem .5rem}
           <div class="caseload">
             <div class="caseload-top">
               <p class="display">Cedarline Physical Therapy</p>
-              <p class="sage-ink" style="font-size:.8rem;white-space:nowrap" id="day-caption">Monday · 6 patients</p>
+              <p class="sage-ink" style="font-size:.8rem;white-space:nowrap" id="day-caption">Monday · 4 patients</p>
             </div>
             <div class="rows" id="rows" aria-live="polite"></div>
           </div>
@@ -974,11 +974,9 @@ document.querySelectorAll('[data-acc]').forEach(list => list.addEventListener('c
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 // log[d] = 1 if the patient logged on day d (0-indexed Mon..Sun). msg = day index a message came in.
 const PATIENTS = [
-  { id: 'AL', name: 'A. Lindqvist', log: [1,1,1,1,1,0,1], next: 'Mon' },
   { id: 'DB', name: 'D. Brennan',   log: [1,0,0,0,0,0,0], next: 'Fri', risk: true },
   { id: 'JO', name: 'J. Okafor',    log: [1,1,0,0,0,0,0], next: 'Mon', risk: true },
   { id: 'MH', name: 'M. Herrera',   log: [1,1,1,1,1,1,1], next: 'Fri', msg: 3, msgText: 'wrote in about knee soreness' },
-  { id: 'PS', name: 'P. Shah',      log: [1,1,1,1,0,0,0], next: 'Tue', risk: true },
   { id: 'RP', name: 'R. Padilla',   log: [1,1,1,1,1,1,1], next: 'Wed', finish: 4 },
 ];
 const SIM = { day: 0, mode: 'with', reached: {}, playing: null };
